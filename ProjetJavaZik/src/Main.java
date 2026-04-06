@@ -4,7 +4,7 @@ import view.gui.MainFrame;
 
 import javax.swing.*;
 
-/**
+/*
  * Point d'entrée de l'application JavaZic.
  * Lance l'interface graphique par défaut.
  * Passer l'argument {@code --console} pour le mode console.
