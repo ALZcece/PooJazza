@@ -28,7 +28,10 @@ public class Controller {
         this.admin   = new Administrateur("Admin", "Super", "admin", "1234");
         this.abonnes = new ArrayList<>();
         chargerDonnees();
-    }// Ce constructeur initialise la vue, crée l’administrateur par défaut, initialise la liste des abonnés puis charge les données sauvegardées.
+    }// Ce constructeur initialise la vue
+    // il crée l’administrateur par défaut
+    // il initialise la liste des abonnés 
+    // il charge les données sauvegardées
 
     // =========================================================
     //  DÉMARRAGE
@@ -49,7 +52,9 @@ public class Controller {
         }
         sauvegarderDonnees();
         System.out.println("\n  Au revoir ! À bientôt sur JavaZic ♪\n");
-    }// Cette fonction lance la boucle principale du programme, redirige l’utilisateur selon son choix puis sauvegarde les données avant de quitter.
+    }// Cette fonction lance la boucle principale du programme
+    // il redirige l’utilisateur selon son choix 
+    // il sauvegarde les données avant de quitter.
 
     // =========================================================
     //  AUTHENTIFICATION
@@ -65,7 +70,9 @@ public class Controller {
         } else {
             vue.afficherErreur("Identifiants incorrects.");
         }
-    }// Cette fonction gère la connexion de l’administrateur en vérifiant le login et le mot de passe avant d’ouvrir le menu admin.
+    }// Cette fonction gère la connexion de l’administrateur 
+    // il  vérifie le login 
+    // il vérifie le mot de passe avant d’ouvrir le menu admin.
 
     private void connexionAbonne() {
         System.out.println("\n  -- Connexion abonné --");
@@ -83,7 +90,9 @@ public class Controller {
             }
         }
         vue.afficherErreur("Identifiants incorrects.");
-    }// Cette fonction recherche un abonné correspondant aux identifiants saisis, vérifie qu’il est actif puis ouvre son menu personnel.
+    }// Cette fonction recherche un abonné correspondant aux identifiants saisis
+    // il vérifie qu’il est actif 
+    // il ouvre son menu personnel.
 
     private void creerCompte() {
         System.out.println("\n  -- Création de compte --");
@@ -115,7 +124,9 @@ public class Controller {
                 case 3: continuer = false; break;
             }
         }
-    }// Cette fonction lance le mode visiteur avec un nombre d’écoutes limité par session et propose la navigation ou la recherche dans le catalogue.
+    }// Cette fonction lance le mode visiteur avec un nombre d’écoutes limité par session 
+    // il propose la navigation 
+    // il propose la recherche dans le catalogue.
 
     // =========================================================
     //  MENU ABONNÉ
@@ -133,7 +144,11 @@ public class Controller {
                 case 5: continuer = false; vue.afficherMessage("À bientôt, " + a.getPrenom() + " !"); break;
             }
         }
-    }// Cette fonction affiche le menu principal de l’abonné et donne accès au catalogue, à la recherche, aux playlists et à l’historique.
+    }// Cette fonction affiche le menu principal de l’abonné 
+    // il donne accès au catalogue
+    // il donne accès à la recherche
+    // il donne accès aux playlists 
+    // il donne accès à l’historique.
 
     // =========================================================
     //  MENU ADMINISTRATEUR
@@ -150,7 +165,10 @@ public class Controller {
                 case 4: continuer = false; vue.afficherMessage("Déconnexion."); break;
             }
         }
-    }// Cette fonction affiche le menu administrateur et permet de gérer le catalogue, les abonnés et de consulter les statistiques.
+    }// Cette fonction affiche le menu administrateur 
+    // il permet de gérer le catalogue
+    // il permet de gérer les abonnés 
+    // il permet de consulter les statistiques.
 
     // =========================================================
     //  PARCOURIR LE CATALOGUE
@@ -193,7 +211,8 @@ public class Controller {
         int idx = vue.choisirDansListe(morceaux.size());
         if (idx == 0) return;
         voirDetailMorceau(morceaux.get(idx - 1), u);
-    }// Cette fonction affiche une liste de morceaux, permet à l’utilisateur d’en sélectionner un puis ouvre sa fiche détaillée.
+    }// Cette fonction affiche une liste de morceaux
+    // elle permet à l’utilisateur d’en sélectionner un puis ouvre sa fiche détaillée.
 
     private void parcourirAlbums(ArrayList<Album> albums, Utilisateur u) {
         vue.afficherListeAlbums(albums);
@@ -201,7 +220,9 @@ public class Controller {
         int idx = vue.choisirDansListe(albums.size());
         if (idx == 0) return;
         voirDetailAlbum(albums.get(idx - 1), u);
-    }// Cette fonction affiche une liste d’albums, gère la sélection d’un album puis ouvre son détail.
+    }// Cette fonction affiche une liste d’albums, 
+        // elle gère la sélection d’un album 
+        // elle ouvre le détail de l'album.
 
     private void parcourirArtistes(ArrayList<Artiste> artistes, Utilisateur u) {
         vue.afficherListeArtistes(artistes);
@@ -209,7 +230,9 @@ public class Controller {
         int idx = vue.choisirDansListe(artistes.size());
         if (idx == 0) return;
         voirDetailArtiste(artistes.get(idx - 1), u);
-    }// Cette fonction affiche une liste d’artistes, permet d’en choisir un puis montre ses informations détaillées.
+    }// Cette fonction affiche une liste d’artistes
+        // elle permet d’en choisir un 
+        // elle montre ses informations détaillées.
 
     private void parcourirGroupes(ArrayList<Groupe> groupes, Utilisateur u) {
         vue.afficherListeGroupes(groupes);
@@ -217,7 +240,9 @@ public class Controller {
         int idx = vue.choisirDansListe(groupes.size());
         if (idx == 0) return;
         voirDetailGroupe(groupes.get(idx - 1), u);
-    }// Cette fonction affiche une liste de groupes, permet la sélection d’un groupe puis affiche son détail.
+    }// Cette fonction affiche une liste de groupes,
+        // elle permet la sélection d’un groupe 
+        // elle affiche son détail du groupe
 
     // ---- Détails des éléments ----
 
@@ -246,7 +271,8 @@ public class Controller {
                 }
             }
         }
-    }// Cette fonction affiche le détail d’un morceau et propose des actions différentes selon que l’utilisateur soit visiteur ou abonné.
+    }// Cette fonction affiche le détail d’un morceau 
+    // elle propose des actions différentes selon que l’utilisateur soit visiteur ou abonné.
 
     private void voirDetailAlbum(Album album, Utilisateur u) {
         boolean continuer = true;
@@ -266,7 +292,9 @@ public class Controller {
                 case 3: continuer = false; break;
             }
         }
-    }// Cette fonction affiche le détail d’un album et permet soit de consulter ses morceaux, soit d’accéder à son auteur.
+    }// Cette fonction affiche le détail d’un album 
+    // elle permet soit de consulter ses morceaux, 
+    // elle permet soit d’accéder à son auteur.
 
     private void voirDetailArtiste(Artiste artiste, Utilisateur u) {
         boolean continuer = true;
@@ -279,7 +307,9 @@ public class Controller {
                 case 3: continuer = false; break;
             }
         }
-    }// Cette fonction affiche le détail d’un artiste et donne accès à ses albums ou à ses morceaux.
+    }// Cette fonction affiche le détail d’un artiste 
+    // elle donne accès à ses albums 
+    // ou elle donne accès à ses morceaux.
 
     private void voirDetailGroupe(Groupe groupe, Utilisateur u) {
         boolean continuer = true;
@@ -292,7 +322,9 @@ public class Controller {
                 case 3: continuer = false; break;
             }
         }
-    }// Cette fonction affiche le détail d’un groupe et permet de consulter ses albums ou ses morceaux.
+    }// Cette fonction affiche le détail d’un groupe 
+    // elle permet de consulter ses albums 
+    // ou elle permet de consulter ses morceaux.
 
     // =========================================================
     //  ÉCOUTE
@@ -311,7 +343,9 @@ public class Controller {
         } catch (LimiteEcoutesAtteinte e) {
             vue.afficherErreur(e.getMessage());
         }
-    }// Cette fonction simule l’écoute d’un morceau, met à jour les compteurs d’écoutes et enregistre l’historique pour un abonné.
+    }// Cette fonction simule l’écoute d’un morceau, 
+    // elle met à jour les compteurs d’écoutes 
+    // elle enregistre l’historique pour un abonné.
 
     // =========================================================
     //  AVIS (fonctionnalité supplémentaire)
@@ -327,7 +361,9 @@ public class Controller {
         } catch (IllegalArgumentException e) {
             vue.afficherErreur(e.getMessage());
         }
-    }// Cette fonction permet à un abonné de saisir une note et un commentaire puis d’ajouter un avis sur un morceau.
+    }// Cette fonction permet à un abonné de saisir une note 
+    // elle permet à un abonné de saisir un commentaire 
+    // elle permet à un abonné d’ajouter un avis sur un morceau.
 
     private void supprimerAvis(Morceau m, Abonne a) {
         m.supprimerAvis(a);
@@ -360,7 +396,8 @@ public class Controller {
                 case 8: continuer = false; break;
             }
         }
-    }// Cette fonction affiche le menu de gestion des playlists d’un abonné et donne accès à toutes les opérations associées.
+    }// Cette fonction affiche le menu de gestion des playlists d’un abonné 
+    // elle donne accès à toutes les opérations associées.
 
     private void renommerPlaylist(Abonne a) {
         vue.afficherPlaylists(a.getPlaylists());
@@ -371,7 +408,8 @@ public class Controller {
         String nouveau = vue.lireChaine("  Nouveau nom : ");
         p.setNom(nouveau);
         vue.afficherMessage("Playlist renommée en \"" + nouveau + "\".");
-    }// Cette fonction permet à l’abonné de sélectionner une playlist existante puis de modifier son nom.
+    }// Cette fonction permet à l’abonné de sélectionner une playlist existante 
+    // elle permet de modifier son nom.
 
     private void supprimerPlaylist(Abonne a) {
         vue.afficherPlaylists(a.getPlaylists());
@@ -394,7 +432,8 @@ public class Controller {
         if (idx == 0) return;
         Playlist p = a.getPlaylists().get(idx - 1);
         menuDetailPlaylist(p, a);
-    }// Cette fonction permet de sélectionner une playlist parmi celles de l’abonné puis d’ouvrir son menu de détail.
+    }// Cette fonction permet de sélectionner une playlist parmi celles de l’abonné 
+    // elle permet d’ouvrir son menu de détail.
 
     // ---- Playlists collaboratives ----
 
@@ -420,7 +459,8 @@ public class Controller {
         if (idx == 0) return;
         Playlist selected = partagees.get(idx - 1);
         menuDetailPlaylist(selected, a);
-    }// Cette fonction affiche toutes les playlists partagées avec un abonné puis lui permet d’en ouvrir une selon ses droits.
+    }// Cette fonction affiche toutes les playlists partagées avec un abonné 
+    // elle lui permet d’en ouvrir une selon ses droits.
 
     private void gererCollaborateurs(Abonne a) {
         vue.afficherPlaylists(a.getPlaylists());
@@ -472,7 +512,9 @@ public class Controller {
                 case 3: continuer = false; break;
             }
         }
-    }// Cette fonction permet au propriétaire d’une playlist de gérer ses collaborateurs en ajoutant, retirant ou affichant leurs droits.
+    }// Cette fonction permet au propriétaire d’une playlist de gérer ses collaborateurs en ajoutant les droits, 
+    // elle permet au propriétaire d'une playlist de gérer ses collaborateurs en retirant les droits 
+    // elle permet au propriétaire d'une playlist de gérer ses collaborateurs en affichant leurs droits.
 
     private void menuDetailPlaylist(Playlist p, Abonne a) {
         boolean continuer = true;
@@ -489,7 +531,10 @@ public class Controller {
                 case 5: continuer = false; break;
             }
         }
-    }// Cette fonction affiche le menu détaillé d’une playlist pour consulter, ajouter, retirer ou écouter ses morceaux.
+    }// Cette fonction affiche le menu détaillé d’une playlist pour consulter ses morceaux, 
+    // Cette fonction affiche le menu détaillé d’une playlist pour ajouter ses morceaux.
+    // Cette fonction affiche le menu détaillé d’une playlist pour retirer ses morceaux
+    // Cette fonction affiche le menu détaillé d’une playlist pour écouter ses morceaux
 
     private void ajouterMorceauPlaylist(Playlist p) {
         String query = vue.lireChaine("  Rechercher un morceau : ");
@@ -525,7 +570,8 @@ public class Controller {
         int idx = vue.choisirDansListe(p.getMorceaux().size());
         if (idx == 0) return;
         ecouter(p.getMorceaux().get(idx - 1), a);
-    }// Cette fonction permet à l’abonné de choisir un morceau dans une playlist puis de lancer son écoute.
+    }// Cette fonction permet à l’abonné de choisir un morceau dans une playlist 
+    // elle lance son écoute.
 
     // =========================================================
     //  GESTION DU CATALOGUE (ADMIN)
@@ -547,7 +593,8 @@ public class Controller {
                 case 9: continuer = false; break;
             }
         }
-    }// Cette fonction affiche le menu de gestion du catalogue pour l’administrateur et centralise toutes les opérations de modification.
+    }// Cette fonction affiche le menu de gestion du catalogue pour l’administrateur 
+    // elle centralise toutes les opérations de modification.
 
     private void ajouterArtiste() {
         String nom = vue.lireChaine("  Nom de l'artiste : ");
@@ -555,14 +602,16 @@ public class Controller {
         Artiste a = new Artiste(nom, bio);
         catalogue.ajouterArtiste(a);
         vue.afficherMessage("Artiste \"" + nom + "\" ajouté.");
-    }// Cette fonction crée un nouvel artiste à partir des informations saisies puis l’ajoute au catalogue.
+    }// Cette fonction crée un nouvel artiste à partir des informations saisies 
+    // puis l’ajoute au catalogue.
 
     private void ajouterGroupe() {
         String nom = vue.lireChaine("  Nom du groupe : ");
         Groupe g = new Groupe(nom);
         catalogue.ajouterGroupe(g);
         vue.afficherMessage("Groupe \"" + nom + "\" ajouté.");
-    }// Cette fonction crée un nouveau groupe musical puis l’ajoute au catalogue.
+    }// Cette fonction crée un nouveau groupe musical
+    //puis l’ajoute au catalogue.
 
     private void ajouterAlbum() {
         AuteurMusical auteur = choisirAuteur();
@@ -572,7 +621,8 @@ public class Controller {
         Album album = new Album(titre, annee, auteur);
         catalogue.ajouterAlbum(album);
         vue.afficherMessage("Album \"" + titre + "\" ajouté.");
-    }// Cette fonction crée un album pour un auteur choisi puis l’ajoute au catalogue.
+    }// Cette fonction crée un album pour un auteur choisi 
+    //puis l’ajoute au catalogue.
 
     private void ajouterMorceau() {
         AuteurMusical auteur = choisirAuteur();
@@ -596,7 +646,9 @@ public class Controller {
         } catch (MorceauDejaExistantException e) {
             vue.afficherErreur(e.getMessage());
         }
-    }// Cette fonction crée un morceau, l’ajoute au catalogue puis propose éventuellement de l’associer à un album de son auteur.
+    }// Cette fonction crée un morceau, 
+    // elle l’ajoute au catalogue 
+    // puis propose éventuellement de l’associer à un album de son auteur.
 
     private void supprimerMorceau() {
         vue.afficherListeMorceaux(catalogue.getMorceaux());
@@ -667,7 +719,11 @@ public class Controller {
             int idx = vue.choisirDansListe(catalogue.getGroupes().size());
             return idx == 0 ? null : catalogue.getGroupes().get(idx - 1);
         }
-    }// Cette fonction choisirAuteur permet à l’administrateur de sélectionner le type d’auteur musical à associer, soit un artiste soit un groupe. Elle affiche la liste correspondante, vérifie qu’elle n’est pas vide, puis retourne l’auteur choisi ou null si l’utilisateur annule.
+    }// Cette fonction choisirAuteur permet à l’administrateur de sélectionner le type d’auteur musical à associer, 
+    // soit un artiste soit un groupe. 
+    //Elle affiche la liste correspondante, 
+    //vérifie qu’elle n’est pas vide, 
+    //puis retourne l’auteur choisi ou null si l’utilisateur annule.
 
     // =========================================================
     //  GESTION DES ABONNÉS (ADMIN)
@@ -684,7 +740,13 @@ public class Controller {
                 case 4: continuer = false; break;
             }
         }
-    }// Cette fonction menuGestionAbonnes affiche et gère le menu de gestion des abonnés pour l’administrateur. Elle permet de consulter la liste des abonnés, suspendre ou réactiver un compte, supprimer un compte ou quitter ce menu.
+    }// Cette fonction menuGestionAbonnes affiche 
+    // gère le menu de gestion des abonnés pour l’administrateur. 
+    //Elle permet de consulter la liste des abonnés, 
+    // elle permet de suspendre 
+    // ou elle permet de réactiver un compte, 
+    // elle permet dee supprimer un compte 
+    // ou elle permet de quitter ce menu.
 
     private void toggleSuspension() {
         vue.afficherListeAbonnes(abonnes);
@@ -695,7 +757,9 @@ public class Controller {
         a.setActif(!a.isActif());
         String etat = a.isActif() ? "réactivé" : "suspendu";
         vue.afficherMessage("Compte de " + a.getLogin() + " " + etat + ".");
-    }// Cette fonction toggleSuspension permet à l’administrateur de modifier l’état d’un compte abonné. Elle inverse l’état actif ou suspendu de l’abonné sélectionné puis affiche un message confirmant le nouveau statut.
+    }// Cette fonction toggleSuspension permet à l’administrateur de modifier l’état d’un compte abonné. 
+    //Elle inverse l’état actif ou suspendu de l’abonné sélectionné 
+    //puis affiche un message confirmant le nouveau statut.
 
     private void supprimerAbonne() {
         vue.afficherListeAbonnes(abonnes);
@@ -705,7 +769,10 @@ public class Controller {
         Abonne a = abonnes.get(idx - 1);
         abonnes.remove(a);
         vue.afficherMessage("Compte de " + a.getLogin() + " supprimé.");
-    }// Cette fonction supprimerAbonne permet à l’administrateur de supprimer définitivement un abonné de la liste des comptes enregistrés. Elle affiche d’abord les abonnés, laisse l’administrateur en choisir un, puis le retire de la collection.
+    }// Cette fonction supprimerAbonne permet à l’administrateur de supprimer définitivement un abonné de la liste des comptes enregistrés. 
+    //Elle affiche d’abord les abonnés, 
+    // elle laisse l’administrateur en choisir un, 
+    // puis le retire de la collection.
 
     // =========================================================
     //  PERSISTANCE
@@ -747,7 +814,11 @@ public class Controller {
                 abonnes = new ArrayList<>();
             }
         }
-    }// Cette fonction chargerDonnees initialise le chargement des données persistantes de l’application. Elle crée d’abord le dossier de stockage si nécessaire, tente ensuite de charger le catalogue depuis une sauvegarde binaire, puis bascule sur le fichier texte ou les données par défaut en cas d’échec. Elle charge enfin la liste des abonnés depuis le fichier de sauvegarde prévu.
+    }// Cette fonction chargerDonnees initialise le chargement des données persistantes de l’application. 
+    //Elle crée d’abord le dossier de stockage si nécessaire, 
+    // elle tente ensuite de charger le catalogue depuis une sauvegarde binaire, 
+    //puis bascule sur le fichier texte ou les données par défaut en cas d’échec. 
+    //Elle charge enfin la liste des abonnés depuis le fichier de sauvegarde prévu.
 
     /**
      * Charge le catalogue depuis data/catalogue.txt.
@@ -760,7 +831,9 @@ public class Controller {
             vue.afficherInfo("catalogue.txt introuvable — chargement des données par défaut.");
             DataLoader.initialiserDonneesDemo(catalogue);
         }
-    }// Cette fonction chargerCatalogueTxt tente de remplir le catalogue à partir du fichier texte initial. Si ce fichier n’est pas trouvé, elle charge automatiquement un jeu de données de démonstration afin que l’application puisse quand même fonctionner.
+    }// Cette fonction chargerCatalogueTxt tente de remplir le catalogue à partir du fichier texte initial.
+    //Si ce fichier n’est pas trouvé,
+    //elle charge automatiquement un jeu de données de démonstration afin que l’application puisse quand même fonctionner.
 
     /** Sauvegarde le catalogue et la liste des abonnés dans des fichiers. */
     private void sauvegarderDonnees() {
@@ -775,7 +848,9 @@ public class Controller {
             vue.afficherErreur("Erreur lors de la sauvegarde des abonnés : " + e.getMessage());
         }
         vue.afficherMessage("Données sauvegardées.");
-    }// Cette fonction sauvegarderDonnees enregistre l’état actuel du catalogue et de la liste des abonnés dans des fichiers de sérialisation. Elle gère séparément la sauvegarde de chaque fichier et affiche un message d’erreur si une écriture échoue.
+    }// Cette fonction sauvegarderDonnees enregistre l’état actuel du catalogue et de la liste des abonnés dans des fichiers de sérialisation. 
+    //Elle gère séparément la sauvegarde de chaque fichier 
+    // elle affiche un message d’erreur si une écriture échoue.
 
 }
 
