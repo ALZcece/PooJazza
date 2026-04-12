@@ -119,7 +119,38 @@ public class DataLoader {
             return false;
         }
     }
+    /* Cette fonction chargerCatalogueDepuisTxt permet de remplir le catalogue musical
+     à partir d’un fichier texte externe nommé catalogue.txt.
+     Elle commence par rechercher le fichier dans différents emplacements possibles,
+     ce qui rend le programme plus souple selon le dossier depuis lequel il est exécuté.
+     Si le fichier est introuvable, la fonction affiche un message d’erreur
+     et retourne false pour signaler l’échec du chargement.
+     Si le fichier est trouvé, la fonction l’ouvre en lecture avec l’encodage UTF-8
+     afin de préserver correctement les accents et caractères spéciaux.
+     Trois HashMap temporaires sont ensuite créées pour mémoriser les artistes,
+     les groupes et les albums déjà rencontrés pendant la lecture du fichier.
+     Ces structures servent à résoudre les références entre objets par leur nom.
+     La lecture se fait ligne par ligne.
+     Les lignes vides ainsi que les lignes de commentaire commençant par # sont ignorées.
+     Chaque ligne utile est découpée avec le séparateur "|" afin d’extraire ses informations.
+     Le premier champ indique le type de donnée à créer : ARTISTE, GROUPE, ALBUM ou MORCEAU.
+     Pour un artiste, la fonction crée l’objet correspondant puis l’ajoute au catalogue
+     et à la map des artistes pour pouvoir le retrouver plus tard.
+     Pour un groupe, elle crée le groupe, ajoute éventuellement ses membres
+     s’ils ont déjà été déclarés comme artistes, puis l’enregistre dans le catalogue.
+     Pour un album, elle convertit l’année, résout son auteur grâce à la fonction resoudreAuteur,
+     puis crée l’album et l’ajoute au catalogue ainsi qu’à la map des albums.
+     Pour un morceau, elle lit le titre, la durée, l’auteur et éventuellement l’album associé.
+     Elle crée ensuite le morceau puis tente de l’ajouter au catalogue.
+     Si un titre d’album est fourni et que cet album existe,
+     le morceau est également ajouté à cet album.
+     La fonction ignore silencieusement les exceptions de doublon de morceau
+     afin d’éviter qu’un doublon dans le fichier ne bloque entièrement le chargement.
+     Si tout se passe bien, elle retourne true.
+     En cas d’erreur de lecture ou de conversion numérique,
+     elle affiche un message et retourne false.*/
 
+    
     /**
      * Cherche catalogue.txt dans plusieurs emplacements possibles selon le contexte d'exécution.
      * @return le File trouvé, ou null si introuvable
@@ -138,7 +169,22 @@ public class DataLoader {
         }
         return null;
     }
-
+    
+    /* Cette fonction trouverFichierCatalogue a pour rôle de localiser le fichier catalogue.txt
+     dans plusieurs dossiers possibles.
+     Elle est utile car le programme peut être lancé depuis différents environnements :
+     depuis un IDE, depuis un dossier projet, ou depuis un répertoire parent.
+     Pour cela, elle définit un tableau de chemins potentiels.
+     Elle parcourt ensuite ces chemins un par un.
+     Pour chaque chemin, elle crée un objet File
+     et vérifie si le fichier existe réellement.
+     Dès qu’un fichier valide est trouvé, il est immédiatement retourné.
+     Cela permet au reste du programme d’utiliser le bon fichier sans se soucier de son emplacement exact.
+     Si aucun des chemins testés ne contient le fichier recherché,
+     la fonction retourne null.
+     Cette valeur null indique clairement au programme appelant
+     qu’aucun fichier catalogue n’a pu être localisé.*/
+    
     // =========================================================
     //  DONNÉES DE DÉMONSTRATION (fallback statique)
     // =========================================================
@@ -204,6 +250,27 @@ public class DataLoader {
             System.err.println("Erreur initialisation démo : " + e.getMessage());
         }
     }
+        // Cette fonction initialiserDonneesDemo sert à remplir automatiquement le catalogue
+    /*avec un ensemble de données de démonstration codées directement dans le programme.
+    Elle est utilisée comme solution de secours lorsque le fichier catalogue.txt est absent
+    ou impossible à exploiter.
+    Son objectif est de permettre à l’application de rester fonctionnelle même sans fichier externe.
+    Elle crée plusieurs artistes et groupes célèbres afin de fournir une base de test réaliste.
+    Elle commence par créer le groupe The Beatles ainsi que ses différents membres.
+    Ces artistes sont ajoutés individuellement au catalogue,
+    puis le groupe lui-même est ajouté également.
+    La fonction appelle ensuite ajouterAlbumAvecMorceaux
+    pour créer rapidement plusieurs albums et morceaux liés au groupe.
+    Le même principe est appliqué à Michael Jackson, Adele, Daft Punk et Queen.
+    Cela permet d’obtenir un catalogue varié contenant des artistes solo et des groupes.
+    Les albums créés couvrent plusieurs périodes et plusieurs styles,
+    ce qui rend les démonstrations plus intéressantes.
+    Toute la logique est placée dans un bloc try/catch
+    pour éviter qu’une erreur inattendue stoppe complètement l’initialisation.
+    Si une exception survient, un message d’erreur est affiché sur la sortie d’erreur.
+    Cette fonction joue donc un rôle important pour les tests,
+    les démonstrations en soutenance,
+    et les premières exécutions du programme.*/
 
     private static void ajouterAlbumAvecMorceaux(Catalogue catalogue, String titre, int annee,
                                                   AuteurMusical auteur, String[] titres, int[] durees) {
@@ -217,7 +284,26 @@ public class DataLoader {
             } catch (model.exceptions.MorceauDejaExistantException ignored) {}
         }
     }
+    /* Cette fonction ajouterAlbumAvecMorceaux est une méthode utilitaire
+     destinée à simplifier la création d’un album et de tous ses morceaux.
+     Elle reçoit en paramètre le catalogue à enrichir,
+     le titre de l’album, son année, son auteur,
+     ainsi que deux tableaux parallèles contenant les titres et durées des morceaux.
+     Elle commence par créer l’objet Album correspondant.
+     Cet album est ensuite ajouté au catalogue général.
+     La fonction parcourt ensuite tous les morceaux grâce à une boucle for.
+     À chaque itération, elle crée un nouveau morceau à partir du titre et de la durée correspondants.
+     Le morceau est d’abord ajouté au catalogue,
+     puis associé à l’album avec la méthode ajouterMorceau.
+     Cette méthode évite d’écrire plusieurs fois le même bloc de création
+     dans la fonction d’initialisation des données de démonstration.
+     Elle améliore donc la lisibilité et la réutilisabilité du code.
+     Les exceptions liées aux doublons sont capturées et ignorées
+     afin de ne pas interrompre l’ajout global des données.
+     Cette fonction contribue donc à factoriser le code
+     et à garantir la cohérence entre le catalogue et les albums.*/
 
+    
     /** Résout un auteur (artiste ou groupe) à partir de son nom. */
     private static AuteurMusical resoudreAuteur(String nom,
                                                 HashMap<String, Artiste> artistesMap,
@@ -227,4 +313,20 @@ public class DataLoader {
         if (artistesMap.containsKey(key)) return artistesMap.get(key);
         return null;
     }
+    /* Cette fonction resoudreAuteur permet de retrouver un auteur musical
+     à partir d’un simple nom sous forme de chaîne de caractères.
+     L’auteur recherché peut être soit un groupe, soit un artiste individuel.
+     La fonction commence par convertir le nom en minuscules
+     afin d’effectuer une recherche insensible à la casse.
+     Elle consulte d’abord la map des groupes.
+     Si un groupe correspondant existe, il est immédiatement retourné.
+     Sinon, elle consulte la map des artistes.
+     Si un artiste portant ce nom existe, il est retourné à son tour.
+     Si aucune correspondance n’est trouvée dans les deux maps,
+     la fonction retourne null.
+     Cette méthode est essentielle lors du chargement du fichier texte,
+     car les albums et les morceaux stockent seulement le nom de leur auteur dans le fichier.
+     Elle permet donc de transformer cette information textuelle
+     en une vraie référence objet utilisable dans le modèle.
+     Elle garantit ainsi la cohérence des liens entre les différentes entités du catalogue.*/
 }
