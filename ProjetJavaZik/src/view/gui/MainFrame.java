@@ -8,8 +8,8 @@ import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 
 /**
- * Fenêtre principale de l'application JavaZic (interface graphique).
- * Gère la navigation entre les écrans via un {@link CardLayout}.
+ * Fenetre principale de l'application JavaZic (interface graphique).
+ * Gere la navigation entre les ecrans via un {@link CardLayout}.
  */
 public class MainFrame extends JFrame {
 
@@ -36,13 +36,16 @@ public class MainFrame extends JFrame {
     }
 
     private void initUI() {
-        setTitle("♪ JavaZic");
-        setSize(1050, 680);
-        setMinimumSize(new Dimension(800, 550));
+        setTitle("JavaZic");
+        setSize(1100, 720);
+        setMinimumSize(new Dimension(850, 580));
         setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
         setLocationRelativeTo(null);
 
-        // Sauvegarde automatique à la fermeture
+        // Fond global
+        contentPane.setBackground(WelcomePanel.BG);
+
+        // Sauvegarde automatique a la fermeture
         addWindowListener(new WindowAdapter() {
             @Override
             public void windowClosing(WindowEvent e) {
@@ -52,7 +55,7 @@ public class MainFrame extends JFrame {
             }
         });
 
-        // Création des panels
+        // Creation des panels
         welcomePanel   = new WelcomePanel(ctrl, this);
         cataloguePanel = new CataloguePanel(ctrl, this, false);
         abonnePanel    = new AbonnePanel(ctrl, this);
@@ -68,7 +71,7 @@ public class MainFrame extends JFrame {
     }
 
     /**
-     * Navigue vers l'écran indiqué et rafraîchit son contenu.
+     * Navigue vers l'ecran indique et rafraichit son contenu.
      */
     public void showCard(String name) {
         cardLayout.show(contentPane, name);
@@ -79,7 +82,7 @@ public class MainFrame extends JFrame {
         }
     }
 
-    /** Recrée le panel abonné (après login) et l'affiche. */
+    /** Recree le panel abonne (apres login) et l'affiche. */
     public void ouvrirEspaceAbonne() {
         contentPane.remove(abonnePanel);
         abonnePanel = new AbonnePanel(ctrl, this);
@@ -87,7 +90,7 @@ public class MainFrame extends JFrame {
         showCard(CARD_ABONNE);
     }
 
-    /** Recrée le panel admin (après login) et l'affiche. */
+    /** Recree le panel admin (apres login) et l'affiche. */
     public void ouvrirEspaceAdmin() {
         contentPane.remove(adminPanel);
         adminPanel = new AdminPanel(ctrl, this);
