@@ -38,6 +38,16 @@ public class AbonnePanel extends JPanel {
     // Historique
     private DefaultListModel<String> historiqueModel;
 
+    // Lecteur de playlist
+    private JLabel playlistNowPlayingLabel;
+    private JProgressBar playlistProgressBar;
+    private JButton btnPlayPlaylist;
+    private JButton btnPausePlaylist;
+    private JButton btnStopPlaylist;
+    private SwingWorker<Void, Object[]> playlistWorker;
+    private volatile boolean playlistPaused;
+    private volatile boolean playlistStopped;
+
     public AbonnePanel(GUIController ctrl, MainFrame frame) {
         this.ctrl  = ctrl;
         this.frame = frame;
@@ -80,6 +90,16 @@ public class AbonnePanel extends JPanel {
         tabs.addTab("  Mes Playlists  ", buildPlaylistTab());
         tabs.addTab("  Playlists partagees  ", buildPartageesTab());
         tabs.addTab("  Historique  ", buildHistoriqueTab());
+
+        // Rafraichir automatiquement l'historique des qu'on selectionne l'onglet
+        // (pour voir les ecoutes faites depuis le catalogue ou la lecture de playlist)
+        tabs.addChangeListener(e -> {
+            int idx = tabs.getSelectedIndex();
+            String title = tabs.getTitleAt(idx);
+            if (title != null && title.contains("Historique")) {
+                rafraichirHistorique();
+            }
+        });
 
         add(header, BorderLayout.NORTH);
         add(tabs,   BorderLayout.CENTER);
@@ -143,7 +163,176 @@ public class AbonnePanel extends JPanel {
         split.setBorder(BorderFactory.createEmptyBorder());
 
         panel.add(split, BorderLayout.CENTER);
+        panel.add(buildPlaylistPlayerBar(), BorderLayout.SOUTH);
         return panel;
+    }
+
+    /**
+     * Barre de lecture pour la playlist : Lire / Pause / Stop + label + barre de progression.
+     */
+    private JPanel buildPlaylistPlayerBar() {
+        JPanel bar = new JPanel(new BorderLayout(12, 0));
+        bar.setBackground(WelcomePanel.CARD_BG);
+        bar.setBorder(BorderFactory.createCompoundBorder(
+                BorderFactory.createMatteBorder(1, 0, 0, 0, WelcomePanel.BORDER),
+                new EmptyBorder(8, 14, 8, 14)));
+
+        // Boutons de controle
+        JPanel ctrls = new JPanel(new FlowLayout(FlowLayout.LEFT, 6, 0));
+        ctrls.setOpaque(false);
+        btnPlayPlaylist = CataloguePanel.btnAccent("Lire");
+        btnPlayPlaylist.addActionListener(e -> demarrerLecturePlaylist());
+        btnPausePlaylist = CataloguePanel.btnNeutre("Pause");
+        btnPausePlaylist.setEnabled(false);
+        btnPausePlaylist.addActionListener(e -> togglePausePlaylist());
+        btnStopPlaylist = CataloguePanel.btnDanger("Stop");
+        btnStopPlaylist.setEnabled(false);
+        btnStopPlaylist.addActionListener(e -> arreterLecturePlaylist());
+        ctrls.add(btnPlayPlaylist);
+        ctrls.add(btnPausePlaylist);
+        ctrls.add(btnStopPlaylist);
+
+        // Label "Now playing"
+        playlistNowPlayingLabel = new JLabel("  Aucune lecture en cours");
+        playlistNowPlayingLabel.setForeground(WelcomePanel.FG_DIM);
+        playlistNowPlayingLabel.setFont(new Font("SansSerif", Font.ITALIC, 12));
+
+        // Barre de progression
+        playlistProgressBar = new JProgressBar(0, 100);
+        playlistProgressBar.setStringPainted(true);
+        playlistProgressBar.setString("");
+        playlistProgressBar.setForeground(WelcomePanel.ACCENT);
+        playlistProgressBar.setBackground(WelcomePanel.BTN_BG);
+        playlistProgressBar.setPreferredSize(new Dimension(280, 14));
+        playlistProgressBar.setBorder(BorderFactory.createEmptyBorder());
+
+        JPanel right = new JPanel(new BorderLayout(8, 0));
+        right.setOpaque(false);
+        right.add(playlistNowPlayingLabel, BorderLayout.WEST);
+        right.add(playlistProgressBar, BorderLayout.EAST);
+
+        bar.add(ctrls, BorderLayout.WEST);
+        bar.add(right, BorderLayout.EAST);
+        return bar;
+    }
+
+    /**
+     * Lance la lecture de la playlist selectionnee dans la liste.
+     * Joue chaque morceau pendant 3 secondes (simulation), met a jour la
+     * barre de progression et le label, et incremente l'historique a chaque morceau.
+     */
+    private void demarrerLecturePlaylist() {
+        Playlist pl = getPlaylistSelectionnee();
+        if (pl == null) {
+            JOptionPane.showMessageDialog(frame,
+                    "Selectionnez d'abord une playlist a lire.",
+                    "Aucune playlist", JOptionPane.INFORMATION_MESSAGE);
+            return;
+        }
+        if (pl.getMorceaux().isEmpty()) {
+            JOptionPane.showMessageDialog(frame, "Cette playlist est vide.");
+            return;
+        }
+        if (playlistWorker != null && !playlistWorker.isDone()) return;
+
+        playlistPaused = false;
+        playlistStopped = false;
+        btnPlayPlaylist.setEnabled(false);
+        btnPausePlaylist.setEnabled(true);
+        btnPausePlaylist.setText("Pause");
+        btnStopPlaylist.setEnabled(true);
+
+        final java.util.ArrayList<Morceau> queue = new java.util.ArrayList<>(pl.getMorceaux());
+        final int total = queue.size();
+
+        playlistWorker = new SwingWorker<Void, Object[]>() {
+            @Override
+            protected Void doInBackground() throws Exception {
+                for (int i = 0; i < total; i++) {
+                    if (playlistStopped) return null;
+                    Morceau m = queue.get(i);
+
+                    // L'enregistrement de l'ecoute + la mise a jour de l'historique
+                    // sont faits sur l'EDT dans process() pour eviter les soucis de thread-safety.
+                    publish(new Object[]{"start", i, m});
+
+                    int totalMs = 3000; // simulation 3 secondes par morceau
+                    int elapsedMs = 0;
+                    int stepMs = 50;
+                    while (elapsedMs < totalMs) {
+                        if (playlistStopped) return null;
+                        Thread.sleep(stepMs);
+                        if (playlistPaused) continue;
+                        elapsedMs += stepMs;
+                        int percent = (int) (100.0 * elapsedMs / totalMs);
+                        publish(new Object[]{"progress", percent});
+                    }
+                }
+                return null;
+            }
+
+            @Override
+            protected void process(java.util.List<Object[]> chunks) {
+                for (Object[] o : chunks) {
+                    String type = (String) o[0];
+                    if ("start".equals(type)) {
+                        int idx = (Integer) o[1];
+                        Morceau m = (Morceau) o[2];
+                        String auteur = m.getAuteur() != null ? m.getAuteur().getNom() : "?";
+
+                        // Enregistrer l'ecoute → met a jour le compteur ET ajoute dans l'historique
+                        try { ctrl.ecouter(m); } catch (Exception ignored) {}
+
+                        // Rafraichir l'historique IMMEDIATEMENT pour qu'il soit a jour
+                        // meme si l'utilisateur consulte l'onglet pendant la lecture
+                        rafraichirHistorique();
+
+                        playlistNowPlayingLabel.setText(String.format(
+                                "  Lecture (%d/%d) : %s  \u2014  %s",
+                                idx + 1, total, m.getTitre(), auteur));
+                        playlistNowPlayingLabel.setForeground(WelcomePanel.ACCENT);
+                        playlistProgressBar.setValue(0);
+                        playlistProgressBar.setString("0%");
+                    } else if ("progress".equals(type)) {
+                        int p = (Integer) o[1];
+                        playlistProgressBar.setValue(p);
+                        playlistProgressBar.setString(p + "%");
+                    }
+                }
+            }
+
+            @Override
+            protected void done() {
+                playlistProgressBar.setValue(0);
+                playlistProgressBar.setString("");
+                playlistNowPlayingLabel.setText(playlistStopped
+                        ? "  Lecture arretee"
+                        : "  Playlist terminee");
+                playlistNowPlayingLabel.setForeground(WelcomePanel.FG_DIM);
+                btnPlayPlaylist.setEnabled(true);
+                btnPausePlaylist.setEnabled(false);
+                btnPausePlaylist.setText("Pause");
+                btnStopPlaylist.setEnabled(false);
+                playlistWorker = null;
+                rafraichirHistorique();
+                rafraichirMorceauxPlaylist();
+            }
+        };
+        playlistWorker.execute();
+    }
+
+    /** Bascule entre Pause et Reprise de la lecture en cours. */
+    private void togglePausePlaylist() {
+        playlistPaused = !playlistPaused;
+        btnPausePlaylist.setText(playlistPaused ? "Reprendre" : "Pause");
+        playlistNowPlayingLabel.setForeground(
+                playlistPaused ? WelcomePanel.FG_DIM : WelcomePanel.ACCENT);
+    }
+
+    /** Arrete completement la lecture de la playlist. */
+    private void arreterLecturePlaylist() {
+        playlistStopped = true;
+        playlistPaused = false;
     }
 
     private JPanel buildPlaylistButtons() {
@@ -478,11 +667,21 @@ public class AbonnePanel extends JPanel {
         JList<String> liste = new JList<>(historiqueModel);
         styleList(liste);
 
+        // Header : titre a gauche + bouton Rafraichir a droite
+        JPanel header = new JPanel(new BorderLayout());
+        header.setOpaque(false);
+
         JLabel titre = new JLabel("  Derniers morceaux ecoutes (du plus recent)");
         titre.setForeground(WelcomePanel.FG);
         titre.setFont(new Font("SansSerif", Font.BOLD, 14));
 
-        panel.add(titre, BorderLayout.NORTH);
+        JButton btnRefresh = CataloguePanel.btnNeutre("Rafraichir");
+        btnRefresh.addActionListener(e -> rafraichirHistorique());
+
+        header.add(titre,      BorderLayout.WEST);
+        header.add(btnRefresh, BorderLayout.EAST);
+
+        panel.add(header, BorderLayout.NORTH);
         panel.add(CataloguePanel.wrapInRoundedScroll(liste), BorderLayout.CENTER);
         return panel;
     }

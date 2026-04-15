@@ -3,6 +3,7 @@ package view.gui;
 import controller.GUIController;
 import model.*;
 import model.exceptions.LimiteEcoutesAtteinte;
+import model.exceptions.MorceauDejaExistantException;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
@@ -26,6 +27,7 @@ public class CataloguePanel extends JPanel {
 
     private JTextField rechercheField;
     private JComboBox<String> filtreCombo;
+    private JComboBox<String> genreCombo;
     private DefaultTableModel tableModel;
     private JTable resultTable;
     private JTextArea detailArea;
@@ -33,6 +35,7 @@ public class CataloguePanel extends JPanel {
     private JProgressBar progressBar;
     private JButton btnLire;
     private JButton btnAvis;
+    private JButton btnAjouterPlaylist;
 
     private Object selectionCourante;
 
@@ -77,22 +80,47 @@ public class CataloguePanel extends JPanel {
         filtreCombo = new JComboBox<>(new String[]{"Tout", "Morceaux", "Albums", "Artistes", "Groupes"});
         filtreCombo.setFont(new Font("SansSerif", Font.PLAIN, 12));
 
+        // ComboBox des genres : "Tous" + tous les labels du enum Genre
+        String[] genres = new String[Genre.values().length + 1];
+        genres[0] = "Tous genres";
+        for (int i = 0; i < Genre.values().length; i++) {
+            genres[i + 1] = Genre.values()[i].getLabel();
+        }
+        genreCombo = new JComboBox<>(genres);
+        genreCombo.setFont(new Font("SansSerif", Font.PLAIN, 12));
+        genreCombo.addActionListener(e -> rechercher());
+
         JButton btnSearch = btnAccent("Rechercher");
         btnSearch.addActionListener(e -> rechercher());
 
         JButton btnAll = btnNeutre("Tout afficher");
-        btnAll.addActionListener(e -> afficherTout());
+        btnAll.addActionListener(e -> { genreCombo.setSelectedIndex(0); rechercheField.setText(""); afficherTout(); });
 
         JLabel lbl = new JLabel("Recherche :");
         lbl.setForeground(WelcomePanel.FG_DIM);
         lbl.setFont(new Font("SansSerif", Font.PLAIN, 12));
 
+        JLabel lblGenre = new JLabel("Genre :");
+        lblGenre.setForeground(WelcomePanel.FG_DIM);
+        lblGenre.setFont(new Font("SansSerif", Font.PLAIN, 12));
+
         bar.add(lbl);
         bar.add(rechercheField);
         bar.add(filtreCombo);
+        bar.add(lblGenre);
+        bar.add(genreCombo);
         bar.add(btnSearch);
         bar.add(btnAll);
         return bar;
+    }
+
+    /**
+     * Retourne le Genre selectionne dans la combo, ou null si "Tous genres".
+     */
+    private Genre getGenreSelectionne() {
+        int idx = genreCombo.getSelectedIndex();
+        if (idx <= 0) return null;
+        return Genre.values()[idx - 1];
     }
 
     // ---------------------------------------------------------------
@@ -100,15 +128,16 @@ public class CataloguePanel extends JPanel {
     // ---------------------------------------------------------------
 
     private JSplitPane buildCenter() {
-        // Table
-        tableModel = new DefaultTableModel(new String[]{"Type", "Titre / Nom", "Infos"}, 0) {
+        // Table : Type | Titre/Nom | Genre | Infos
+        tableModel = new DefaultTableModel(new String[]{"Type", "Titre / Nom", "Genre", "Infos"}, 0) {
             public boolean isCellEditable(int r, int c) { return false; }
         };
         resultTable = new JTable(tableModel);
         styleTable(resultTable);
         resultTable.setAutoCreateRowSorter(true);
         resultTable.getColumnModel().getColumn(0).setMaxWidth(90);
-        resultTable.getColumnModel().getColumn(2).setMaxWidth(160);
+        resultTable.getColumnModel().getColumn(2).setMaxWidth(110);
+        resultTable.getColumnModel().getColumn(3).setMaxWidth(160);
         resultTable.addMouseListener(new MouseAdapter() {
             public void mouseClicked(MouseEvent e) {
                 int viewRow = resultTable.getSelectedRow();
@@ -147,8 +176,13 @@ public class CataloguePanel extends JPanel {
         btnAvis.setVisible(false);
         btnAvis.addActionListener(e -> dialogAvis());
 
+        btnAjouterPlaylist = btnNeutre("+ Playlist");
+        btnAjouterPlaylist.setVisible(false);
+        btnAjouterPlaylist.addActionListener(e -> dialogAjouterAuPlaylist());
+
         actionPanel.add(btnLire);
         actionPanel.add(btnAvis);
+        actionPanel.add(btnAjouterPlaylist);
 
         detailPanel.add(scrollDetail, BorderLayout.CENTER);
         detailPanel.add(actionPanel,  BorderLayout.SOUTH);
@@ -205,19 +239,29 @@ public class CataloguePanel extends JPanel {
 
         Catalogue cat = ctrl.getCatalogue();
         String filtre = (String) filtreCombo.getSelectedItem();
+        Genre genreFiltre = getGenreSelectionne();
+
         if ("Tout".equals(filtre) || "Morceaux".equals(filtre))
-            cat.getMorceaux().forEach(m -> tableModel.addRow(new Object[]{"Morceau", m.getTitre(), m.getAuteur() != null ? m.getAuteur().getNom() : ""}));
-        if ("Tout".equals(filtre) || "Albums".equals(filtre))
-            cat.getAlbums().forEach(a -> tableModel.addRow(new Object[]{"Album", a.getTitre(), String.valueOf(a.getAnnee())}));
-        if ("Tout".equals(filtre) || "Artistes".equals(filtre))
-            cat.getArtistes().forEach(a -> tableModel.addRow(new Object[]{"Artiste", a.getNom(), ""}));
-        if ("Tout".equals(filtre) || "Groupes".equals(filtre))
-            cat.getGroupes().forEach(g -> tableModel.addRow(new Object[]{"Groupe", g.getNom(), g.getMembres().size() + " membres"}));
+            cat.getMorceaux().stream()
+                .filter(m -> genreFiltre == null || m.getGenre() == genreFiltre)
+                .forEach(m -> tableModel.addRow(new Object[]{"Morceau", m.getTitre(), m.getGenre().getLabel(), m.getAuteur() != null ? m.getAuteur().getNom() : ""}));
+        // Si un genre est selectionne, on ne montre que les morceaux (les autres types n'ont pas de genre)
+        if (genreFiltre == null) {
+            if ("Tout".equals(filtre) || "Albums".equals(filtre))
+                cat.getAlbums().forEach(a -> tableModel.addRow(new Object[]{"Album", a.getTitre(), "", String.valueOf(a.getAnnee())}));
+            if ("Tout".equals(filtre) || "Artistes".equals(filtre))
+                cat.getArtistes().forEach(a -> tableModel.addRow(new Object[]{"Artiste", a.getNom(), "", ""}));
+            if ("Tout".equals(filtre) || "Groupes".equals(filtre))
+                cat.getGroupes().forEach(g -> tableModel.addRow(new Object[]{"Groupe", g.getNom(), "", g.getMembres().size() + " membres"}));
+        }
     }
 
     private void rechercher() {
         String query = rechercheField.getText().trim();
-        if (query.isEmpty()) { afficherTout(); return; }
+        Genre genreFiltre = getGenreSelectionne();
+        // Si pas de query et pas de genre, on affiche tout
+        if (query.isEmpty() && genreFiltre == null) { afficherTout(); return; }
+
         tableModel.setRowCount(0);
         selectionCourante = null;
         detailArea.setText("");
@@ -226,14 +270,18 @@ public class CataloguePanel extends JPanel {
 
         Catalogue cat = ctrl.getCatalogue();
         String filtre = (String) filtreCombo.getSelectedItem();
+
         if ("Tout".equals(filtre) || "Morceaux".equals(filtre))
-            cat.rechercherMorceaux(query).forEach(m -> tableModel.addRow(new Object[]{"Morceau", m.getTitre(), m.getAuteur() != null ? m.getAuteur().getNom() : ""}));
-        if ("Tout".equals(filtre) || "Albums".equals(filtre))
-            cat.rechercherAlbums(query).forEach(a -> tableModel.addRow(new Object[]{"Album", a.getTitre(), String.valueOf(a.getAnnee())}));
-        if ("Tout".equals(filtre) || "Artistes".equals(filtre))
-            cat.rechercherArtistes(query).forEach(a -> tableModel.addRow(new Object[]{"Artiste", a.getNom(), ""}));
-        if ("Tout".equals(filtre) || "Groupes".equals(filtre))
-            cat.rechercherGroupes(query).forEach(g -> tableModel.addRow(new Object[]{"Groupe", g.getNom(), ""}));
+            cat.rechercherMorceaux(query, genreFiltre).forEach(m -> tableModel.addRow(new Object[]{"Morceau", m.getTitre(), m.getGenre().getLabel(), m.getAuteur() != null ? m.getAuteur().getNom() : ""}));
+        // Si un genre est selectionne, on n'affiche que les morceaux
+        if (genreFiltre == null) {
+            if ("Tout".equals(filtre) || "Albums".equals(filtre))
+                cat.rechercherAlbums(query).forEach(a -> tableModel.addRow(new Object[]{"Album", a.getTitre(), "", String.valueOf(a.getAnnee())}));
+            if ("Tout".equals(filtre) || "Artistes".equals(filtre))
+                cat.rechercherArtistes(query).forEach(a -> tableModel.addRow(new Object[]{"Artiste", a.getNom(), "", ""}));
+            if ("Tout".equals(filtre) || "Groupes".equals(filtre))
+                cat.rechercherGroupes(query).forEach(g -> tableModel.addRow(new Object[]{"Groupe", g.getNom(), "", ""}));
+        }
     }
 
     // ---------------------------------------------------------------
@@ -247,6 +295,7 @@ public class CataloguePanel extends JPanel {
 
         btnLire.setVisible(false);
         btnAvis.setVisible(false);
+        btnAjouterPlaylist.setVisible(false);
 
         if (type.contains("Morceau")) {
             Morceau m = cat.getMorceaux().stream().filter(x -> x.getTitre().equals(nom)).findFirst().orElse(null);
@@ -256,6 +305,7 @@ public class CataloguePanel extends JPanel {
             sb.append(m.getTitre()).append("\n");
             sb.append("\u2500".repeat(30)).append("\n\n");
             sb.append("Auteur   :  ").append(m.getAuteur() != null ? m.getAuteur().getNom() : "Inconnu").append("\n");
+            sb.append("Genre    :  ").append(m.getGenre().getLabel()).append("\n");
             sb.append("Duree    :  ").append(m.getDureeFormatee()).append("\n");
             sb.append("Ecoutes  :  ").append(m.getNbEcoutes()).append("\n");
             if (!m.getAlbums().isEmpty()) {
@@ -272,7 +322,10 @@ public class CataloguePanel extends JPanel {
             }
             detailArea.setText(sb.toString());
             btnLire.setVisible(true);
-            if (ctrl.estAbonne()) btnAvis.setVisible(true);
+            if (ctrl.estAbonne()) {
+                btnAvis.setVisible(true);
+                btnAjouterPlaylist.setVisible(true);
+            }
 
         } else if (type.contains("Album")) {
             Album a = cat.getAlbums().stream().filter(x -> x.getTitre().equals(nom)).findFirst().orElse(null);
@@ -377,6 +430,48 @@ public class CataloguePanel extends JPanel {
     // ---------------------------------------------------------------
     //  Avis
     // ---------------------------------------------------------------
+
+    /**
+     * Ouvre un dialog pour ajouter le morceau selectionne a une des playlists
+     * de l'abonne courant.
+     */
+    private void dialogAjouterAuPlaylist() {
+        if (!(selectionCourante instanceof Morceau)) return;
+        if (!ctrl.estAbonne()) return;
+        Morceau m = (Morceau) selectionCourante;
+        Abonne abonne = (Abonne) ctrl.getUtilisateurCourant();
+
+        if (abonne.getPlaylists().isEmpty()) {
+            JOptionPane.showMessageDialog(frame,
+                    "Vous n'avez aucune playlist.\nCreez-en une depuis l'onglet 'Mes Playlists'.",
+                    "Aucune playlist", JOptionPane.INFORMATION_MESSAGE);
+            return;
+        }
+
+        String[] noms = abonne.getPlaylists().stream()
+                .map(p -> p.getNom() + "  (" + p.getMorceaux().size() + " titres)")
+                .toArray(String[]::new);
+        JList<String> liste = new JList<>(noms);
+        liste.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+        liste.setSelectedIndex(0);
+
+        int res = JOptionPane.showConfirmDialog(frame,
+                new JScrollPane(liste),
+                "Ajouter \"" + m.getTitre() + "\" a une playlist",
+                JOptionPane.OK_CANCEL_OPTION, JOptionPane.PLAIN_MESSAGE);
+        if (res != JOptionPane.OK_OPTION || liste.getSelectedIndex() < 0) return;
+
+        Playlist p = abonne.getPlaylists().get(liste.getSelectedIndex());
+        try {
+            ctrl.ajouterMorceauPlaylist(p, m);
+            JOptionPane.showMessageDialog(frame,
+                    "Morceau ajoute a la playlist \"" + p.getNom() + "\".",
+                    "Ajout reussi", JOptionPane.INFORMATION_MESSAGE);
+        } catch (MorceauDejaExistantException ex) {
+            JOptionPane.showMessageDialog(frame, ex.getMessage(),
+                    "Deja present", JOptionPane.WARNING_MESSAGE);
+        }
+    }
 
     private void dialogAvis() {
         if (!(selectionCourante instanceof Morceau)) return;
