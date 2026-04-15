@@ -499,7 +499,12 @@ public class GUIController {
 
     public Morceau ajouterMorceau(String titre, int duree, AuteurMusical auteur)
             throws MorceauDejaExistantException {
-        Morceau m = new Morceau(titre, duree, auteur);
+        return ajouterMorceau(titre, duree, auteur, Genre.INCONNU);
+    }
+
+    public Morceau ajouterMorceau(String titre, int duree, AuteurMusical auteur, Genre genre)
+            throws MorceauDejaExistantException {
+        Morceau m = new Morceau(titre, duree, auteur, genre);
         catalogue.ajouterMorceau(m);
         return m;
     }/* Cette fonction ajouterMorceau permet de créer
