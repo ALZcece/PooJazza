@@ -77,13 +77,6 @@ public class WelcomePanel extends JPanel {
         card.add(creerBoutonNeutre("Creer un compte", e -> dialogCreerCompte()));
         card.add(Box.createVerticalStrut(12));
         card.add(creerBoutonNeutre("Continuer en visiteur", e -> modeVisiteur()));
-        card.add(Box.createVerticalStrut(36));
-
-        JLabel footer = new JLabel("Admin : admin / 1234");
-        footer.setFont(new Font("Monospaced", Font.PLAIN, 11));
-        footer.setForeground(new Color(180, 180, 180));
-        footer.setAlignmentX(CENTER_ALIGNMENT);
-        card.add(footer);
 
         add(card);
     }
