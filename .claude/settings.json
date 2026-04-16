@@ -1,0 +1,13 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(mkdir -p bin)",
+      "Bash(javac -d bin -sourcepath src src/Main.java)",
+      "Bash(awk 'NR>=695 && NR<=700 {printf \"%d: [%s]\\\\n\", NR, $0}' src/controller/GUIController.java)",
+      "Bash(java -cp bin Main)",
+      "Bash(echo \"--- exit: $? ---\")",
+      "Read(//tmp/**)",
+      "Bash(echo \"exit code: $?\")"
+    ]
+  }
+}

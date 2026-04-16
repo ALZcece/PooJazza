@@ -697,4 +697,3 @@ public class GUIController {
      Elle joue un rôle de secours important
      dans la stratégie d’initialisation des données.*/
 }
-}
