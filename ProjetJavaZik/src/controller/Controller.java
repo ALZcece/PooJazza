@@ -66,6 +66,7 @@ public class Controller {
             vue.afficherErreur("Identifiants incorrects.");
         }
     }
+    
 
     private void connexionAbonne() {
         System.out.println("\n  -- Connexion abonné --");
@@ -355,7 +356,9 @@ public class Controller {
                 case 3: renommerPlaylist(a); break;
                 case 4: supprimerPlaylist(a); break;
                 case 5: gererPlaylist(a); break;
-                case 6: continuer = false; break;
+                case 6: voirPlaylistsPartagees(a); break;
+                case 7: gererCollaborateurs(a); break;
+                case 8: continuer = false; break;
             }
         }
     }
@@ -392,6 +395,84 @@ public class Controller {
         if (idx == 0) return;
         Playlist p = a.getPlaylists().get(idx - 1);
         menuDetailPlaylist(p, a);
+    }
+
+    // ---- Playlists collaboratives ----
+
+    private void voirPlaylistsPartagees(Abonne a) {
+        ArrayList<Playlist> partagees = new ArrayList<>();
+        for (Abonne autre : abonnes) {
+            for (Playlist p : autre.getPlaylists()) {
+                if (p.estCollaborateur(a)) partagees.add(p);
+            }
+        }
+        if (partagees.isEmpty()) {
+            vue.afficherInfo("Aucune playlist partagée avec vous.");
+            vue.attendreEntree();
+            return;
+        }
+        System.out.println("\n  Playlists partagées avec vous :");
+        for (int i = 0; i < partagees.size(); i++) {
+            Playlist p = partagees.get(i);
+            String droits = p.peutModifier(a) ? "[Lecture + Édition]" : "[Lecture seule]";
+            System.out.printf("  %3d. %s (par %s) %s%n", i + 1, p.getNom(), p.getProprietaire().getLogin(), droits);
+        }
+        int idx = vue.choisirDansListe(partagees.size());
+        if (idx == 0) return;
+        Playlist selected = partagees.get(idx - 1);
+        menuDetailPlaylist(selected, a);
+    }
+
+    private void gererCollaborateurs(Abonne a) {
+        vue.afficherPlaylists(a.getPlaylists());
+        if (a.getPlaylists().isEmpty()) return;
+        int idx = vue.choisirDansListe(a.getPlaylists().size());
+        if (idx == 0) return;
+        Playlist p = a.getPlaylists().get(idx - 1);
+
+        boolean continuer = true;
+        while (continuer) {
+            System.out.println("\n  Collaborateurs de \"" + p.getNom() + "\" :");
+            if (p.getCollaborateurs().isEmpty()) {
+                System.out.println("    (aucun)");
+            } else {
+                for (java.util.Map.Entry<Abonne, Boolean> entry : p.getCollaborateurs().entrySet()) {
+                    String droits = entry.getValue() ? "Lecture + Édition" : "Lecture seule";
+                    System.out.println("    - " + entry.getKey().getLogin() + " [" + droits + "]");
+                }
+            }
+            System.out.println("\n  1. Ajouter un collaborateur");
+            System.out.println("  2. Retirer un collaborateur");
+            System.out.println("  3. Retour");
+            int choix = vue.lireChoix(1, 3);
+            switch (choix) {
+                case 1:
+                    ArrayList<Abonne> autres = new ArrayList<>();
+                    for (Abonne ab : abonnes) {
+                        if (!ab.equals(a) && !p.estCollaborateur(ab)) autres.add(ab);
+                    }
+                    if (autres.isEmpty()) { vue.afficherInfo("Aucun abonné disponible."); break; }
+                    vue.afficherListeAbonnes(autres);
+                    int idxCollab = vue.choisirDansListe(autres.size());
+                    if (idxCollab == 0) break;
+                    System.out.println("  Droits : 1. Lecture seule  2. Lecture + Édition");
+                    int droits = vue.lireChoix(1, 2);
+                    p.ajouterCollaborateur(autres.get(idxCollab - 1), droits == 2);
+                    vue.afficherMessage("Collaborateur ajouté.");
+                    break;
+                case 2:
+                    if (p.getCollaborateurs().isEmpty()) { vue.afficherInfo("Aucun collaborateur."); break; }
+                    ArrayList<Abonne> collabs = new ArrayList<>(p.getCollaborateurs().keySet());
+                    for (int i = 0; i < collabs.size(); i++)
+                        System.out.printf("  %3d. %s%n", i + 1, collabs.get(i).getLogin());
+                    int idxRet = vue.choisirDansListe(collabs.size());
+                    if (idxRet == 0) break;
+                    p.retirerCollaborateur(collabs.get(idxRet - 1));
+                    vue.afficherMessage("Collaborateur retiré.");
+                    break;
+                case 3: continuer = false; break;
+            }
+        }
     }
 
     private void menuDetailPlaylist(Playlist p, Abonne a) {

@@ -3,28 +3,31 @@ package view.gui;
 import controller.GUIController;
 import model.*;
 import model.exceptions.LimiteEcoutesAtteinte;
+import model.exceptions.MorceauDejaExistantException;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import javax.swing.table.DefaultTableModel;
+import javax.swing.table.JTableHeader;
+import javax.swing.table.TableRowSorter;
 import java.awt.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
-import java.util.ArrayList;
+import java.awt.geom.RoundRectangle2D;
 
 /**
  * Panel de navigation et de recherche dans le catalogue musical.
- * Réutilisable en mode visiteur (standalone) et intégré dans AbonnePanel.
+ * Supporte le tri des colonnes par clic sur les en-tetes.
  */
 public class CataloguePanel extends JPanel {
 
     private final GUIController ctrl;
     private final MainFrame frame;
-    private final boolean embedded; // true = intégré dans AbonnePanel (pas de bouton Retour)
+    private final boolean embedded;
 
-    // Composants principaux
     private JTextField rechercheField;
     private JComboBox<String> filtreCombo;
+    private JComboBox<String> genreCombo;
     private DefaultTableModel tableModel;
     private JTable resultTable;
     private JTextArea detailArea;
@@ -32,8 +35,9 @@ public class CataloguePanel extends JPanel {
     private JProgressBar progressBar;
     private JButton btnLire;
     private JButton btnAvis;
+    private JButton btnAjouterPlaylist;
 
-    private Object selectionCourante; // Morceau, Album, Artiste ou Groupe sélectionné
+    private Object selectionCourante;
 
     public CataloguePanel(GUIController ctrl, MainFrame frame, boolean embedded) {
         this.ctrl     = ctrl;
@@ -52,134 +56,155 @@ public class CataloguePanel extends JPanel {
     }
 
     // ---------------------------------------------------------------
-    //  Barre de recherche (haut)
+    //  Barre de recherche
     // ---------------------------------------------------------------
 
     private JPanel buildTopBar() {
-        JPanel bar = new JPanel(new FlowLayout(FlowLayout.LEFT, 10, 8));
-        bar.setBackground(new Color(38, 38, 50));
+        JPanel bar = new JPanel(new FlowLayout(FlowLayout.LEFT, 10, 10));
+        bar.setBackground(WelcomePanel.HEADER_BG);
+        bar.setBorder(BorderFactory.createMatteBorder(0, 0, 1, 0, WelcomePanel.BORDER));
 
         if (!embedded) {
-            JButton btnRetour = new JButton("← Accueil");
-            styleBtn(btnRetour, WelcomePanel.FG_DIM);
+            JButton btnRetour = btnNeutre("Accueil");
             btnRetour.addActionListener(e -> { ctrl.deconnecter(); frame.showCard(MainFrame.CARD_WELCOME); });
             bar.add(btnRetour);
         }
 
-        rechercheField = new JTextField(20);
-        rechercheField.setBackground(new Color(55, 55, 70));
-        rechercheField.setForeground(WelcomePanel.FG);
-        rechercheField.setCaretColor(WelcomePanel.FG);
+        rechercheField = new JTextField(22);
+        rechercheField.setFont(new Font("SansSerif", Font.PLAIN, 13));
         rechercheField.setBorder(BorderFactory.createCompoundBorder(
-                BorderFactory.createLineBorder(new Color(80, 80, 100)),
-                new EmptyBorder(4, 8, 4, 8)));
+                new WelcomePanel.RoundedLineBorder(WelcomePanel.BORDER, 1, 10),
+                new EmptyBorder(6, 12, 6, 12)));
         rechercheField.addActionListener(e -> rechercher());
 
         filtreCombo = new JComboBox<>(new String[]{"Tout", "Morceaux", "Albums", "Artistes", "Groupes"});
-        filtreCombo.setBackground(new Color(55, 55, 70));
-        filtreCombo.setForeground(WelcomePanel.FG);
+        filtreCombo.setFont(new Font("SansSerif", Font.PLAIN, 12));
 
-        JButton btnSearch = new JButton("Rechercher");
-        styleBtn(btnSearch, WelcomePanel.ACCENT);
+        // ComboBox des genres : "Tous" + tous les labels du enum Genre
+        String[] genres = new String[Genre.values().length + 1];
+        genres[0] = "Tous genres";
+        for (int i = 0; i < Genre.values().length; i++) {
+            genres[i + 1] = Genre.values()[i].getLabel();
+        }
+        genreCombo = new JComboBox<>(genres);
+        genreCombo.setFont(new Font("SansSerif", Font.PLAIN, 12));
+        genreCombo.addActionListener(e -> rechercher());
+
+        JButton btnSearch = btnAccent("Rechercher");
         btnSearch.addActionListener(e -> rechercher());
 
-        JButton btnAll = new JButton("Tout afficher");
-        styleBtn(btnAll, WelcomePanel.FG_DIM);
-        btnAll.addActionListener(e -> afficherTout());
+        JButton btnAll = btnNeutre("Tout afficher");
+        btnAll.addActionListener(e -> { genreCombo.setSelectedIndex(0); rechercheField.setText(""); afficherTout(); });
 
-        bar.add(colorLabel("Recherche :", WelcomePanel.FG_DIM));
+        JLabel lbl = new JLabel("Recherche :");
+        lbl.setForeground(WelcomePanel.FG_DIM);
+        lbl.setFont(new Font("SansSerif", Font.PLAIN, 12));
+
+        JLabel lblGenre = new JLabel("Genre :");
+        lblGenre.setForeground(WelcomePanel.FG_DIM);
+        lblGenre.setFont(new Font("SansSerif", Font.PLAIN, 12));
+
+        bar.add(lbl);
         bar.add(rechercheField);
         bar.add(filtreCombo);
+        bar.add(lblGenre);
+        bar.add(genreCombo);
         bar.add(btnSearch);
         bar.add(btnAll);
         return bar;
     }
 
+    /**
+     * Retourne le Genre selectionne dans la combo, ou null si "Tous genres".
+     */
+    private Genre getGenreSelectionne() {
+        int idx = genreCombo.getSelectedIndex();
+        if (idx <= 0) return null;
+        return Genre.values()[idx - 1];
+    }
+
     // ---------------------------------------------------------------
-    //  Zone centrale : liste + détail
+    //  Zone centrale
     // ---------------------------------------------------------------
 
     private JSplitPane buildCenter() {
-        // Table de résultats (gauche)
-        tableModel = new DefaultTableModel(new String[]{"Type", "Titre / Nom", "Infos"}, 0) {
+        // Table : Type | Titre/Nom | Genre | Infos
+        tableModel = new DefaultTableModel(new String[]{"Type", "Titre / Nom", "Genre", "Infos"}, 0) {
             public boolean isCellEditable(int r, int c) { return false; }
         };
         resultTable = new JTable(tableModel);
-        resultTable.setBackground(new Color(38, 38, 50));
-        resultTable.setForeground(WelcomePanel.FG);
-        resultTable.setGridColor(new Color(55, 55, 70));
-        resultTable.setSelectionBackground(new Color(60, 100, 160));
-        resultTable.setSelectionForeground(Color.WHITE);
-        resultTable.setRowHeight(24);
-        resultTable.setFont(new Font("SansSerif", Font.PLAIN, 13));
-        resultTable.getTableHeader().setBackground(new Color(45, 45, 58));
-        resultTable.getTableHeader().setForeground(WelcomePanel.FG_DIM);
-        resultTable.getColumnModel().getColumn(0).setMaxWidth(80);
-        resultTable.getColumnModel().getColumn(2).setMaxWidth(140);
+        styleTable(resultTable);
+        resultTable.setAutoCreateRowSorter(true);
+        resultTable.getColumnModel().getColumn(0).setMaxWidth(90);
+        resultTable.getColumnModel().getColumn(2).setMaxWidth(110);
+        resultTable.getColumnModel().getColumn(3).setMaxWidth(160);
         resultTable.addMouseListener(new MouseAdapter() {
             public void mouseClicked(MouseEvent e) {
-                int row = resultTable.getSelectedRow();
-                if (row >= 0) selectionnerLigne(row);
-                if (e.getClickCount() == 2 && row >= 0) actionDouble(row);
+                int viewRow = resultTable.getSelectedRow();
+                if (viewRow >= 0) {
+                    int modelRow = resultTable.convertRowIndexToModel(viewRow);
+                    selectionnerLigne(modelRow);
+                }
+                if (e.getClickCount() == 2 && viewRow >= 0) actionDouble();
             }
         });
 
-        JScrollPane scrollListe = new JScrollPane(resultTable);
-        scrollListe.setBackground(new Color(38, 38, 50));
-        scrollListe.getViewport().setBackground(new Color(38, 38, 50));
-        scrollListe.setBorder(BorderFactory.createEmptyBorder());
+        JScrollPane scrollListe = wrapInRoundedScroll(resultTable);
 
-        // Panel de détail (droite)
-        JPanel detailPanel = new JPanel(new BorderLayout(0, 8));
-        detailPanel.setBackground(new Color(38, 38, 50));
-        detailPanel.setBorder(new EmptyBorder(10, 10, 10, 10));
+        // Detail
+        JPanel detailPanel = new JPanel(new BorderLayout(0, 10));
+        detailPanel.setBackground(WelcomePanel.BG);
+        detailPanel.setBorder(new EmptyBorder(0, 8, 0, 0));
 
         detailArea = new JTextArea();
         detailArea.setEditable(false);
-        detailArea.setBackground(new Color(45, 45, 58));
+        detailArea.setBackground(WelcomePanel.CARD_BG);
         detailArea.setForeground(WelcomePanel.FG);
-        detailArea.setFont(new Font("Monospaced", Font.PLAIN, 13));
-        detailArea.setBorder(new EmptyBorder(10, 10, 10, 10));
+        detailArea.setFont(new Font("SansSerif", Font.PLAIN, 13));
+        detailArea.setBorder(new EmptyBorder(16, 18, 16, 18));
         detailArea.setLineWrap(true);
         detailArea.setWrapStyleWord(true);
-        JScrollPane scrollDetail = new JScrollPane(detailArea);
-        scrollDetail.setBorder(BorderFactory.createLineBorder(new Color(60, 60, 80)));
+        JScrollPane scrollDetail = wrapInRoundedScroll(detailArea);
 
-        // Boutons action (visible seulement quand un morceau est sélectionné)
         JPanel actionPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 8, 0));
-        actionPanel.setBackground(new Color(38, 38, 50));
-        btnLire = new JButton("▶  Écouter");
-        styleBtn(btnLire, WelcomePanel.ACCENT2);
+        actionPanel.setOpaque(false);
+        btnLire = btnAccent("Ecouter");
         btnLire.setVisible(false);
         btnLire.addActionListener(e -> ecouterSelection());
 
-        btnAvis = new JButton("★  Laisser un avis");
-        styleBtn(btnAvis, WelcomePanel.ACCENT);
+        btnAvis = btnNeutre("Laisser un avis");
         btnAvis.setVisible(false);
         btnAvis.addActionListener(e -> dialogAvis());
 
+        btnAjouterPlaylist = btnNeutre("+ Playlist");
+        btnAjouterPlaylist.setVisible(false);
+        btnAjouterPlaylist.addActionListener(e -> dialogAjouterAuPlaylist());
+
         actionPanel.add(btnLire);
         actionPanel.add(btnAvis);
+        actionPanel.add(btnAjouterPlaylist);
 
         detailPanel.add(scrollDetail, BorderLayout.CENTER);
         detailPanel.add(actionPanel,  BorderLayout.SOUTH);
 
         JSplitPane split = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, scrollListe, detailPanel);
-        split.setDividerLocation(450);
-        split.setDividerSize(4);
+        split.setDividerLocation(500);
+        split.setDividerSize(5);
         split.setBackground(WelcomePanel.BG);
-        split.setBorder(BorderFactory.createEmptyBorder());
+        split.setBorder(new EmptyBorder(8, 8, 8, 8));
         return split;
     }
 
     // ---------------------------------------------------------------
-    //  Barre de lecture (bas) — barre de progression
+    //  Barre de lecture
     // ---------------------------------------------------------------
 
     private JPanel buildPlayerBar() {
-        JPanel bar = new JPanel(new BorderLayout(10, 0));
-        bar.setBackground(new Color(22, 22, 30));
-        bar.setBorder(new EmptyBorder(6, 16, 6, 16));
+        JPanel bar = new JPanel(new BorderLayout(12, 0));
+        bar.setBackground(WelcomePanel.CARD_BG);
+        bar.setBorder(BorderFactory.createCompoundBorder(
+                BorderFactory.createMatteBorder(1, 0, 0, 0, WelcomePanel.BORDER),
+                new EmptyBorder(10, 18, 10, 18)));
 
         lectureLabel = new JLabel("Aucune lecture en cours");
         lectureLabel.setForeground(WelcomePanel.FG_DIM);
@@ -189,8 +214,10 @@ public class CataloguePanel extends JPanel {
         progressBar.setValue(0);
         progressBar.setStringPainted(true);
         progressBar.setString("");
-        progressBar.setForeground(WelcomePanel.ACCENT2);
-        progressBar.setBackground(new Color(45, 45, 58));
+        progressBar.setForeground(WelcomePanel.ACCENT);
+        progressBar.setBackground(WelcomePanel.BTN_BG);
+        progressBar.setPreferredSize(new Dimension(300, 14));
+        progressBar.setBorder(BorderFactory.createEmptyBorder());
 
         bar.add(lectureLabel, BorderLayout.WEST);
         bar.add(progressBar,  BorderLayout.CENTER);
@@ -201,9 +228,7 @@ public class CataloguePanel extends JPanel {
     //  Recherche et affichage
     // ---------------------------------------------------------------
 
-    public void rafraichir() {
-        afficherTout();
-    }
+    public void rafraichir() { afficherTout(); }
 
     private void afficherTout() {
         tableModel.setRowCount(0);
@@ -214,19 +239,29 @@ public class CataloguePanel extends JPanel {
 
         Catalogue cat = ctrl.getCatalogue();
         String filtre = (String) filtreCombo.getSelectedItem();
+        Genre genreFiltre = getGenreSelectionne();
+
         if ("Tout".equals(filtre) || "Morceaux".equals(filtre))
-            cat.getMorceaux().forEach(m -> tableModel.addRow(new Object[]{"♪ Morceau", m.getTitre(), m.getAuteur() != null ? m.getAuteur().getNom() : ""}));
-        if ("Tout".equals(filtre) || "Albums".equals(filtre))
-            cat.getAlbums().forEach(a -> tableModel.addRow(new Object[]{"💿 Album", a.getTitre(), a.getAnnee()}));
-        if ("Tout".equals(filtre) || "Artistes".equals(filtre))
-            cat.getArtistes().forEach(a -> tableModel.addRow(new Object[]{"🎤 Artiste", a.getNom(), ""}));
-        if ("Tout".equals(filtre) || "Groupes".equals(filtre))
-            cat.getGroupes().forEach(g -> tableModel.addRow(new Object[]{"🎸 Groupe", g.getNom(), g.getMembres().size() + " membres"}));
+            cat.getMorceaux().stream()
+                .filter(m -> genreFiltre == null || m.getGenre() == genreFiltre)
+                .forEach(m -> tableModel.addRow(new Object[]{"Morceau", m.getTitre(), m.getGenre().getLabel(), m.getAuteur() != null ? m.getAuteur().getNom() : ""}));
+        // Si un genre est selectionne, on ne montre que les morceaux (les autres types n'ont pas de genre)
+        if (genreFiltre == null) {
+            if ("Tout".equals(filtre) || "Albums".equals(filtre))
+                cat.getAlbums().forEach(a -> tableModel.addRow(new Object[]{"Album", a.getTitre(), "", String.valueOf(a.getAnnee())}));
+            if ("Tout".equals(filtre) || "Artistes".equals(filtre))
+                cat.getArtistes().forEach(a -> tableModel.addRow(new Object[]{"Artiste", a.getNom(), "", ""}));
+            if ("Tout".equals(filtre) || "Groupes".equals(filtre))
+                cat.getGroupes().forEach(g -> tableModel.addRow(new Object[]{"Groupe", g.getNom(), "", g.getMembres().size() + " membres"}));
+        }
     }
 
     private void rechercher() {
         String query = rechercheField.getText().trim();
-        if (query.isEmpty()) { afficherTout(); return; }
+        Genre genreFiltre = getGenreSelectionne();
+        // Si pas de query et pas de genre, on affiche tout
+        if (query.isEmpty() && genreFiltre == null) { afficherTout(); return; }
+
         tableModel.setRowCount(0);
         selectionCourante = null;
         detailArea.setText("");
@@ -235,62 +270,73 @@ public class CataloguePanel extends JPanel {
 
         Catalogue cat = ctrl.getCatalogue();
         String filtre = (String) filtreCombo.getSelectedItem();
+
         if ("Tout".equals(filtre) || "Morceaux".equals(filtre))
-            cat.rechercherMorceaux(query).forEach(m -> tableModel.addRow(new Object[]{"♪ Morceau", m.getTitre(), m.getAuteur() != null ? m.getAuteur().getNom() : ""}));
-        if ("Tout".equals(filtre) || "Albums".equals(filtre))
-            cat.rechercherAlbums(query).forEach(a -> tableModel.addRow(new Object[]{"💿 Album", a.getTitre(), a.getAnnee()}));
-        if ("Tout".equals(filtre) || "Artistes".equals(filtre))
-            cat.rechercherArtistes(query).forEach(a -> tableModel.addRow(new Object[]{"🎤 Artiste", a.getNom(), ""}));
-        if ("Tout".equals(filtre) || "Groupes".equals(filtre))
-            cat.rechercherGroupes(query).forEach(g -> tableModel.addRow(new Object[]{"🎸 Groupe", g.getNom(), ""}));
+            cat.rechercherMorceaux(query, genreFiltre).forEach(m -> tableModel.addRow(new Object[]{"Morceau", m.getTitre(), m.getGenre().getLabel(), m.getAuteur() != null ? m.getAuteur().getNom() : ""}));
+        // Si un genre est selectionne, on n'affiche que les morceaux
+        if (genreFiltre == null) {
+            if ("Tout".equals(filtre) || "Albums".equals(filtre))
+                cat.rechercherAlbums(query).forEach(a -> tableModel.addRow(new Object[]{"Album", a.getTitre(), "", String.valueOf(a.getAnnee())}));
+            if ("Tout".equals(filtre) || "Artistes".equals(filtre))
+                cat.rechercherArtistes(query).forEach(a -> tableModel.addRow(new Object[]{"Artiste", a.getNom(), "", ""}));
+            if ("Tout".equals(filtre) || "Groupes".equals(filtre))
+                cat.rechercherGroupes(query).forEach(g -> tableModel.addRow(new Object[]{"Groupe", g.getNom(), "", ""}));
+        }
     }
 
     // ---------------------------------------------------------------
-    //  Sélection et détails
+    //  Selection et details
     // ---------------------------------------------------------------
 
-    private void selectionnerLigne(int row) {
-        String type  = (String) tableModel.getValueAt(row, 0);
-        String nom   = (String) tableModel.getValueAt(row, 1);
+    private void selectionnerLigne(int modelRow) {
+        String type  = (String) tableModel.getValueAt(modelRow, 0);
+        String nom   = (String) tableModel.getValueAt(modelRow, 1);
         Catalogue cat = ctrl.getCatalogue();
 
         btnLire.setVisible(false);
         btnAvis.setVisible(false);
+        btnAjouterPlaylist.setVisible(false);
 
         if (type.contains("Morceau")) {
             Morceau m = cat.getMorceaux().stream().filter(x -> x.getTitre().equals(nom)).findFirst().orElse(null);
             if (m == null) return;
             selectionCourante = m;
             StringBuilder sb = new StringBuilder();
-            sb.append("♪  ").append(m.getTitre()).append("\n\n");
-            sb.append("Auteur  : ").append(m.getAuteur() != null ? m.getAuteur().getNom() : "Inconnu").append("\n");
-            sb.append("Durée   : ").append(m.getDureeFormatee()).append("\n");
-            sb.append("Écoutes : ").append(m.getNbEcoutes()).append("\n");
+            sb.append(m.getTitre()).append("\n");
+            sb.append("\u2500".repeat(30)).append("\n\n");
+            sb.append("Auteur   :  ").append(m.getAuteur() != null ? m.getAuteur().getNom() : "Inconnu").append("\n");
+            sb.append("Genre    :  ").append(m.getGenre().getLabel()).append("\n");
+            sb.append("Duree    :  ").append(m.getDureeFormatee()).append("\n");
+            sb.append("Ecoutes  :  ").append(m.getNbEcoutes()).append("\n");
             if (!m.getAlbums().isEmpty()) {
-                sb.append("Albums  : ");
+                sb.append("Albums   :  ");
                 m.getAlbums().forEach(a -> sb.append(a.getTitre()).append("  "));
                 sb.append("\n");
             }
             if (!m.getAvis().isEmpty()) {
-                sb.append(String.format("Note    : %.1f/5 (%d avis)\n", m.getNoteMoyenne(), m.getAvis().size()));
+                sb.append(String.format("Note     :  %.1f / 5  (%d avis)\n", m.getNoteMoyenne(), m.getAvis().size()));
                 sb.append("\nAvis :\n");
-                m.getAvis().forEach(av -> sb.append("  • ").append(av).append("\n"));
+                m.getAvis().forEach(av -> sb.append("  \u2022 ").append(av).append("\n"));
             } else {
                 sb.append("\nAucun avis pour ce morceau.");
             }
             detailArea.setText(sb.toString());
             btnLire.setVisible(true);
-            if (ctrl.estAbonne()) btnAvis.setVisible(true);
+            if (ctrl.estAbonne()) {
+                btnAvis.setVisible(true);
+                btnAjouterPlaylist.setVisible(true);
+            }
 
         } else if (type.contains("Album")) {
             Album a = cat.getAlbums().stream().filter(x -> x.getTitre().equals(nom)).findFirst().orElse(null);
             if (a == null) return;
             selectionCourante = a;
             StringBuilder sb = new StringBuilder();
-            sb.append("💿  ").append(a.getTitre()).append("\n\n");
-            sb.append("Auteur : ").append(a.getAuteur() != null ? a.getAuteur().getNom() : "Inconnu").append("\n");
-            sb.append("Année  : ").append(a.getAnnee()).append("\n");
-            sb.append("Durée  : ").append(a.getDureeTotaleFormatee()).append("\n\n");
+            sb.append(a.getTitre()).append("\n");
+            sb.append("\u2500".repeat(30)).append("\n\n");
+            sb.append("Auteur  :  ").append(a.getAuteur() != null ? a.getAuteur().getNom() : "Inconnu").append("\n");
+            sb.append("Annee   :  ").append(a.getAnnee()).append("\n");
+            sb.append("Duree   :  ").append(a.getDureeTotaleFormatee()).append("\n\n");
             sb.append("Titres :\n");
             a.getMorceaux().forEach(m -> sb.append("  ").append(m.getTitre()).append("  (").append(m.getDureeFormatee()).append(")\n"));
             detailArea.setText(sb.toString());
@@ -300,14 +346,15 @@ public class CataloguePanel extends JPanel {
             if (ar == null) return;
             selectionCourante = ar;
             StringBuilder sb = new StringBuilder();
-            sb.append("🎤  ").append(ar.getNom()).append("\n\n");
+            sb.append(ar.getNom()).append("\n");
+            sb.append("\u2500".repeat(30)).append("\n\n");
             if (!ar.getBiographie().isEmpty()) sb.append(ar.getBiographie()).append("\n\n");
-            if (ar.getGroupe() != null) sb.append("Groupe  : ").append(ar.getGroupe().getNom()).append("\n");
-            sb.append("Albums  : ").append(ar.getAlbums().size()).append("\n");
-            sb.append("Titres  : ").append(ar.getMorceaux().size()).append("\n\n");
+            if (ar.getGroupe() != null) sb.append("Groupe  :  ").append(ar.getGroupe().getNom()).append("\n");
+            sb.append("Albums  :  ").append(ar.getAlbums().size()).append("\n");
+            sb.append("Titres  :  ").append(ar.getMorceaux().size()).append("\n\n");
             if (!ar.getAlbums().isEmpty()) {
                 sb.append("Discographie :\n");
-                ar.getAlbums().forEach(alb -> sb.append("  💿 ").append(alb.getTitre()).append(" (").append(alb.getAnnee()).append(")\n"));
+                ar.getAlbums().forEach(alb -> sb.append("  ").append(alb.getTitre()).append(" (").append(alb.getAnnee()).append(")\n"));
             }
             detailArea.setText(sb.toString());
 
@@ -316,59 +363,53 @@ public class CataloguePanel extends JPanel {
             if (g == null) return;
             selectionCourante = g;
             StringBuilder sb = new StringBuilder();
-            sb.append("🎸  ").append(g.getNom()).append("\n\n");
-            sb.append("Membres : ");
+            sb.append(g.getNom()).append("\n");
+            sb.append("\u2500".repeat(30)).append("\n\n");
+            sb.append("Membres :  ");
             g.getMembres().forEach(m -> sb.append(m.getNom()).append("  "));
-            sb.append("\n\nAlbums : ").append(g.getAlbums().size()).append("\n\n");
+            sb.append("\n\nAlbums  :  ").append(g.getAlbums().size()).append("\n\n");
             if (!g.getAlbums().isEmpty()) {
                 sb.append("Discographie :\n");
-                g.getAlbums().forEach(a -> sb.append("  💿 ").append(a.getTitre()).append(" (").append(a.getAnnee()).append(")\n"));
+                g.getAlbums().forEach(a -> sb.append("  ").append(a.getTitre()).append(" (").append(a.getAnnee()).append(")\n"));
             }
             detailArea.setText(sb.toString());
         }
         detailArea.setCaretPosition(0);
     }
 
-    private void actionDouble(int row) {
+    private void actionDouble() {
         if (selectionCourante instanceof Morceau) ecouterSelection();
     }
 
     // ---------------------------------------------------------------
-    //  Lecture avec barre de progression
+    //  Lecture
     // ---------------------------------------------------------------
 
     private void ecouterSelection() {
         if (!(selectionCourante instanceof Morceau)) return;
         Morceau m = (Morceau) selectionCourante;
-        try {
-            ctrl.ecouter(m);
-        } catch (LimiteEcoutesAtteinte ex) {
+        try { ctrl.ecouter(m); }
+        catch (LimiteEcoutesAtteinte ex) {
             JOptionPane.showMessageDialog(frame, ex.getMessage(), "Limite atteinte", JOptionPane.WARNING_MESSAGE);
             return;
         }
         simulerLecture(m);
-        // Rafraîchir le détail (nb écoutes mis à jour)
-        selectionnerLigne(resultTable.getSelectedRow());
+        int viewRow = resultTable.getSelectedRow();
+        if (viewRow >= 0) selectionnerLigne(resultTable.convertRowIndexToModel(viewRow));
     }
 
-    /** Simule la lecture avec une animation de JProgressBar via SwingWorker. */
     private void simulerLecture(Morceau m) {
-        lectureLabel.setText("▶  " + m.getTitre() + "  —  " + m.getAuteur().getNom());
+        lectureLabel.setText("  " + m.getTitre() + "  \u2014  " + m.getAuteur().getNom());
+        lectureLabel.setForeground(WelcomePanel.ACCENT);
         progressBar.setValue(0);
         progressBar.setString("0%");
         btnLire.setEnabled(false);
-
-        // Durée simulée : min(duree_réelle, 3) secondes à l'écran
         int msTotal = Math.min(m.getDuree(), 3) * 1000;
-
         new SwingWorker<Void, Integer>() {
             protected Void doInBackground() throws Exception {
                 int steps = 50;
                 int delay = msTotal / steps;
-                for (int i = 1; i <= steps; i++) {
-                    Thread.sleep(delay);
-                    publish(i * 2); // 0→100
-                }
+                for (int i = 1; i <= steps; i++) { Thread.sleep(delay); publish(i * 2); }
                 return null;
             }
             protected void process(java.util.List<Integer> chunks) {
@@ -379,7 +420,8 @@ public class CataloguePanel extends JPanel {
             protected void done() {
                 progressBar.setValue(100);
                 progressBar.setString("100%");
-                lectureLabel.setText("✓  " + m.getTitre() + "  — terminé");
+                lectureLabel.setText("  " + m.getTitre() + "  \u2014 termine");
+                lectureLabel.setForeground(WelcomePanel.FG_DIM);
                 btnLire.setEnabled(true);
             }
         }.execute();
@@ -388,6 +430,48 @@ public class CataloguePanel extends JPanel {
     // ---------------------------------------------------------------
     //  Avis
     // ---------------------------------------------------------------
+
+    /**
+     * Ouvre un dialog pour ajouter le morceau selectionne a une des playlists
+     * de l'abonne courant.
+     */
+    private void dialogAjouterAuPlaylist() {
+        if (!(selectionCourante instanceof Morceau)) return;
+        if (!ctrl.estAbonne()) return;
+        Morceau m = (Morceau) selectionCourante;
+        Abonne abonne = (Abonne) ctrl.getUtilisateurCourant();
+
+        if (abonne.getPlaylists().isEmpty()) {
+            JOptionPane.showMessageDialog(frame,
+                    "Vous n'avez aucune playlist.\nCreez-en une depuis l'onglet 'Mes Playlists'.",
+                    "Aucune playlist", JOptionPane.INFORMATION_MESSAGE);
+            return;
+        }
+
+        String[] noms = abonne.getPlaylists().stream()
+                .map(p -> p.getNom() + "  (" + p.getMorceaux().size() + " titres)")
+                .toArray(String[]::new);
+        JList<String> liste = new JList<>(noms);
+        liste.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+        liste.setSelectedIndex(0);
+
+        int res = JOptionPane.showConfirmDialog(frame,
+                new JScrollPane(liste),
+                "Ajouter \"" + m.getTitre() + "\" a une playlist",
+                JOptionPane.OK_CANCEL_OPTION, JOptionPane.PLAIN_MESSAGE);
+        if (res != JOptionPane.OK_OPTION || liste.getSelectedIndex() < 0) return;
+
+        Playlist p = abonne.getPlaylists().get(liste.getSelectedIndex());
+        try {
+            ctrl.ajouterMorceauPlaylist(p, m);
+            JOptionPane.showMessageDialog(frame,
+                    "Morceau ajoute a la playlist \"" + p.getNom() + "\".",
+                    "Ajout reussi", JOptionPane.INFORMATION_MESSAGE);
+        } catch (MorceauDejaExistantException ex) {
+            JOptionPane.showMessageDialog(frame, ex.getMessage(),
+                    "Deja present", JOptionPane.WARNING_MESSAGE);
+        }
+    }
 
     private void dialogAvis() {
         if (!(selectionCourante instanceof Morceau)) return;
@@ -404,26 +488,112 @@ public class CataloguePanel extends JPanel {
         int res = JOptionPane.showConfirmDialog(frame, p, "Laisser un avis", JOptionPane.OK_CANCEL_OPTION);
         if (res != JOptionPane.OK_OPTION) return;
         ctrl.ajouterAvis(m, (Integer) noteSpinner.getValue(), commentaire.getText().trim());
-        JOptionPane.showMessageDialog(frame, "Avis enregistré !");
-        selectionnerLigne(resultTable.getSelectedRow());
+        JOptionPane.showMessageDialog(frame, "Avis enregistre !");
+        int viewRow = resultTable.getSelectedRow();
+        if (viewRow >= 0) selectionnerLigne(resultTable.convertRowIndexToModel(viewRow));
     }
 
     // ---------------------------------------------------------------
-    //  Utilitaires
+    //  Utilitaires UI partages (static)
     // ---------------------------------------------------------------
 
-    private void styleBtn(JButton btn, Color color) {
-        btn.setForeground(color);
-        btn.setBackground(WelcomePanel.BTN_BG);
+    static void styleTable(JTable table) {
+        table.setBackground(WelcomePanel.CARD_BG);
+        table.setForeground(WelcomePanel.FG);
+        table.setGridColor(WelcomePanel.TABLE_GRID);
+        table.setSelectionBackground(WelcomePanel.SELECTION);
+        table.setSelectionForeground(WelcomePanel.FG);
+        table.setRowHeight(32);
+        table.setFont(new Font("SansSerif", Font.PLAIN, 13));
+        table.setShowHorizontalLines(true);
+        table.setShowVerticalLines(false);
+        table.setIntercellSpacing(new Dimension(0, 1));
+        table.setFillsViewportHeight(true);
+        JTableHeader header = table.getTableHeader();
+        header.setBackground(WelcomePanel.BG);
+        header.setForeground(WelcomePanel.FG_DIM);
+        header.setFont(new Font("SansSerif", Font.BOLD, 12));
+        header.setBorder(BorderFactory.createMatteBorder(0, 0, 2, 0, WelcomePanel.ACCENT));
+        header.setReorderingAllowed(false);
+    }
+
+    /** Wrap un composant dans un JScrollPane avec bordure arrondie. */
+    static JScrollPane wrapInRoundedScroll(Component comp) {
+        JScrollPane sp = new JScrollPane(comp);
+        sp.setBorder(new WelcomePanel.RoundedLineBorder(WelcomePanel.BORDER, 1, WelcomePanel.RADIUS));
+        sp.getViewport().setBackground(WelcomePanel.CARD_BG);
+        return sp;
+    }
+
+    static JButton btnAccent(String text) {
+        JButton btn = new JButton(text) {
+            @Override
+            protected void paintComponent(Graphics g) {
+                Graphics2D g2 = (Graphics2D) g.create();
+                g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+                g2.setColor(getBackground());
+                g2.fill(new RoundRectangle2D.Float(0, 0, getWidth(), getHeight(), 10, 10));
+                g2.dispose();
+                super.paintComponent(g);
+            }
+        };
+        btn.setForeground(Color.WHITE);
+        btn.setBackground(WelcomePanel.ACCENT);
         btn.setFocusPainted(false);
         btn.setBorderPainted(false);
+        btn.setContentAreaFilled(false);
+        btn.setOpaque(false);
         btn.setFont(new Font("SansSerif", Font.BOLD, 12));
         btn.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+        btn.addMouseListener(new MouseAdapter() {
+            public void mouseEntered(MouseEvent e) { btn.setBackground(WelcomePanel.ACCENT_HOVER); }
+            public void mouseExited(MouseEvent e)  { btn.setBackground(WelcomePanel.ACCENT); }
+        });
+        return btn;
     }
 
-    private JLabel colorLabel(String text, Color c) {
-        JLabel l = new JLabel(text);
-        l.setForeground(c);
-        return l;
+    static JButton btnNeutre(String text) {
+        JButton btn = new JButton(text);
+        btn.setForeground(WelcomePanel.FG);
+        btn.setBackground(WelcomePanel.BTN_BG);
+        btn.setFocusPainted(false);
+        btn.setBorder(BorderFactory.createCompoundBorder(
+                new WelcomePanel.RoundedLineBorder(WelcomePanel.BORDER, 1, 10),
+                new EmptyBorder(5, 14, 5, 14)));
+        btn.setOpaque(true);
+        btn.setFont(new Font("SansSerif", Font.BOLD, 12));
+        btn.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+        btn.addMouseListener(new MouseAdapter() {
+            public void mouseEntered(MouseEvent e) { btn.setBackground(WelcomePanel.BTN_HOVER); }
+            public void mouseExited(MouseEvent e)  { btn.setBackground(WelcomePanel.BTN_BG); }
+        });
+        return btn;
+    }
+
+    static JButton btnDanger(String text) {
+        JButton btn = new JButton(text) {
+            @Override
+            protected void paintComponent(Graphics g) {
+                Graphics2D g2 = (Graphics2D) g.create();
+                g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+                g2.setColor(getBackground());
+                g2.fill(new RoundRectangle2D.Float(0, 0, getWidth(), getHeight(), 10, 10));
+                g2.dispose();
+                super.paintComponent(g);
+            }
+        };
+        btn.setForeground(Color.WHITE);
+        btn.setBackground(WelcomePanel.DANGER);
+        btn.setFocusPainted(false);
+        btn.setBorderPainted(false);
+        btn.setContentAreaFilled(false);
+        btn.setOpaque(false);
+        btn.setFont(new Font("SansSerif", Font.BOLD, 12));
+        btn.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+        btn.addMouseListener(new MouseAdapter() {
+            public void mouseEntered(MouseEvent e) { btn.setBackground(WelcomePanel.DANGER_HOVER); }
+            public void mouseExited(MouseEvent e)  { btn.setBackground(WelcomePanel.DANGER); }
+        });
+        return btn;
     }
 }

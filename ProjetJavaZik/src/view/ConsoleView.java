@@ -3,7 +3,9 @@ package view;
 import model.*;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.LinkedList;
+import java.util.Map;
 import java.util.Scanner;
 
 /**
@@ -148,7 +150,7 @@ public class ConsoleView {
     //  SOUS-MENUS PLAYLISTS
     // =========================================================
 
-    /** Retourne le choix dans le menu playlists (1-6). */
+    /** Retourne le choix dans le menu playlists (1-8). */
     public int afficherMenuPlaylists() {
         System.out.println("\n" + SEP2);
         System.out.println("  MES PLAYLISTS");
@@ -158,9 +160,11 @@ public class ConsoleView {
         System.out.println("  3. Renommer une playlist");
         System.out.println("  4. Supprimer une playlist");
         System.out.println("  5. Gérer les morceaux d'une playlist");
-        System.out.println("  6. Retour");
+        System.out.println("  6. Playlists partagées avec moi");
+        System.out.println("  7. Gérer les collaborateurs d'une playlist");
+        System.out.println("  8. Retour");
         System.out.println(SEP2);
-        return lireChoix(1, 6);
+        return lireChoix(1, 8);
     }
 
     /** Retourne le choix dans le menu détail d'une playlist (1-5). */
@@ -333,24 +337,113 @@ public class ConsoleView {
 
     public void afficherStatistiques(Catalogue catalogue, ArrayList<Abonne> abonnes) {
         System.out.println("\n" + SEP);
-        System.out.println("  STATISTIQUES");
+        System.out.println("  STATISTIQUES JAVAZIC");
         System.out.println(SEP);
-        System.out.println("  Abonnés         : " + abonnes.size());
-        System.out.println("  Morceaux        : " + catalogue.getMorceaux().size());
-        System.out.println("  Albums          : " + catalogue.getAlbums().size());
-        System.out.println("  Artistes solos  : " + catalogue.getArtistes().size());
-        System.out.println("  Groupes         : " + catalogue.getGroupes().size());
-        System.out.println("  Écoutes totales : " + catalogue.getNbEcoutesTotales());
-        Morceau top = catalogue.getMorceauPlusEcoute();
-        if (top != null)
-            System.out.println("  Top morceau     : " + top.getTitre() + " (" + top.getNbEcoutes() + " écoutes)");
+
+        // Vue d'ensemble
+        int actifs = 0;
+        for (Abonne a : abonnes) if (a.isActif()) actifs++;
+        System.out.println("  Abonnés inscrits  : " + abonnes.size() + " (" + actifs + " actifs, " + (abonnes.size() - actifs) + " suspendus)");
+        System.out.println("  Morceaux          : " + catalogue.getMorceaux().size());
+        System.out.println("  Albums            : " + catalogue.getAlbums().size());
+        System.out.println("  Artistes          : " + catalogue.getArtistes().size());
+        System.out.println("  Groupes           : " + catalogue.getGroupes().size());
+        System.out.println("  Écoutes totales   : " + catalogue.getNbEcoutesTotales());
+        int dureeTotale = catalogue.getMorceaux().stream().mapToInt(Morceau::getDuree).sum();
+        System.out.printf("  Durée catalogue   : %dh%02dm%n", dureeTotale / 3600, (dureeTotale % 3600) / 60);
+        int totalPl = 0;
+        for (Abonne a : abonnes) totalPl += a.getPlaylists().size();
+        System.out.println("  Playlists créées  : " + totalPl);
+        int totalAvis = 0;
+        for (Morceau m : catalogue.getMorceaux()) totalAvis += m.getAvis().size();
+        System.out.println("  Avis déposés      : " + totalAvis);
+
+        // Top 5 morceaux par écoutes
+        System.out.println("\n" + SEP2);
+        System.out.println("  Top 5 morceaux (par écoutes) :");
         System.out.println(SEP2);
-        System.out.println("  Top 5 morceaux les plus écoutés :");
         ArrayList<Morceau> tops = catalogue.getMorceauxParEcoutes();
-        int max = Math.min(5, tops.size());
-        for (int i = 0; i < max; i++)
+        for (int i = 0; i < Math.min(5, tops.size()); i++)
             System.out.printf("    %d. %-30s %d écoute(s)%n", i + 1, tops.get(i).getTitre(), tops.get(i).getNbEcoutes());
-        System.out.println(SEP);
+
+        // Top 5 albums par écoutes cumulées
+        System.out.println("\n" + SEP2);
+        System.out.println("  Top 5 albums (par écoutes cumulées) :");
+        System.out.println(SEP2);
+        ArrayList<Album> albumsTries = new ArrayList<>(catalogue.getAlbums());
+        albumsTries.sort((a1, a2) -> {
+            int e1 = a1.getMorceaux().stream().mapToInt(Morceau::getNbEcoutes).sum();
+            int e2 = a2.getMorceaux().stream().mapToInt(Morceau::getNbEcoutes).sum();
+            return Integer.compare(e2, e1);
+        });
+        for (int i = 0; i < Math.min(5, albumsTries.size()); i++) {
+            Album a = albumsTries.get(i);
+            int ec = a.getMorceaux().stream().mapToInt(Morceau::getNbEcoutes).sum();
+            System.out.printf("    %d. %-30s %d écoute(s)%n", i + 1, a.getTitre(), ec);
+        }
+
+        // Top 5 artistes/groupes par écoutes cumulées
+        System.out.println("\n" + SEP2);
+        System.out.println("  Top 5 artistes/groupes (par écoutes cumulées) :");
+        System.out.println(SEP2);
+        ArrayList<AuteurMusical> auteurs = new ArrayList<>();
+        auteurs.addAll(catalogue.getArtistes());
+        auteurs.addAll(catalogue.getGroupes());
+        auteurs.sort((a1, a2) -> {
+            int e1 = a1.getMorceaux().stream().mapToInt(Morceau::getNbEcoutes).sum();
+            int e2 = a2.getMorceaux().stream().mapToInt(Morceau::getNbEcoutes).sum();
+            return Integer.compare(e2, e1);
+        });
+        for (int i = 0; i < Math.min(5, auteurs.size()); i++) {
+            AuteurMusical a = auteurs.get(i);
+            int ec = a.getMorceaux().stream().mapToInt(Morceau::getNbEcoutes).sum();
+            String type = a instanceof Artiste ? "Artiste" : "Groupe";
+            System.out.printf("    %d. %-25s [%s]  %d écoute(s)%n", i + 1, a.getNom(), type, ec);
+        }
+
+        // Top 5 morceaux les mieux notés
+        System.out.println("\n" + SEP2);
+        System.out.println("  Top 5 morceaux (par note moyenne) :");
+        System.out.println(SEP2);
+        ArrayList<Morceau> morceauxNotes = new ArrayList<>();
+        for (Morceau m : catalogue.getMorceaux()) if (!m.getAvis().isEmpty()) morceauxNotes.add(m);
+        morceauxNotes.sort((a1, a2) -> Double.compare(a2.getNoteMoyenne(), a1.getNoteMoyenne()));
+        for (int i = 0; i < Math.min(5, morceauxNotes.size()); i++) {
+            Morceau m = morceauxNotes.get(i);
+            System.out.printf("    %d. %-30s %.1f/5 (%d avis)%n", i + 1, m.getTitre(), m.getNoteMoyenne(), m.getAvis().size());
+        }
+        if (morceauxNotes.isEmpty()) System.out.println("    (aucun avis déposé)");
+
+        // Top 5 morceaux les plus ajoutés aux playlists
+        System.out.println("\n" + SEP2);
+        System.out.println("  Top 5 morceaux (les plus ajoutés aux playlists) :");
+        System.out.println(SEP2);
+        HashMap<Morceau, Integer> plCount = new HashMap<>();
+        for (Abonne a : abonnes)
+            for (Playlist p : a.getPlaylists())
+                for (Morceau m : p.getMorceaux())
+                    plCount.merge(m, 1, Integer::sum);
+        ArrayList<Map.Entry<Morceau, Integer>> plRank = new ArrayList<>(plCount.entrySet());
+        plRank.sort((a1, a2) -> Integer.compare(a2.getValue(), a1.getValue()));
+        for (int i = 0; i < Math.min(5, plRank.size()); i++) {
+            Morceau m = plRank.get(i).getKey();
+            System.out.printf("    %d. %-30s dans %d playlist(s)%n", i + 1, m.getTitre(), plRank.get(i).getValue());
+        }
+        if (plRank.isEmpty()) System.out.println("    (aucun morceau dans les playlists)");
+
+        // Abonnés les plus actifs
+        System.out.println("\n" + SEP2);
+        System.out.println("  Abonnés les plus actifs :");
+        System.out.println(SEP2);
+        ArrayList<Abonne> abonnesTries = new ArrayList<>(abonnes);
+        abonnesTries.sort((a1, a2) -> Integer.compare(a2.getHistorique().getMorceaux().size(), a1.getHistorique().getMorceaux().size()));
+        for (int i = 0; i < Math.min(5, abonnesTries.size()); i++) {
+            Abonne a = abonnesTries.get(i);
+            System.out.printf("    %d. %-20s %d écoutes, %d playlist(s)%n",
+                    i + 1, a.getLogin(), a.getHistorique().getMorceaux().size(), a.getPlaylists().size());
+        }
+
+        System.out.println("\n" + SEP);
     }
 
     // =========================================================

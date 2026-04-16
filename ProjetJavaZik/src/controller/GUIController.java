@@ -143,7 +143,7 @@ public class GUIController {
     //  PLAYLISTS
     // =========================================================
 
-    /** Crée une playlist pour l'abonné courant. */
+    /** Cree une playlist pour l'abonne courant. */
     public Playlist creerPlaylist(String nom) {
         if (!(utilisateurCourant instanceof Abonne)) return null;
         return ((Abonne) utilisateurCourant).creerPlaylist(nom);
@@ -160,6 +160,48 @@ public class GUIController {
 
     public void retirerMorceauPlaylist(Playlist p, Morceau m) throws ElementIntrouvableException {
         p.retirerMorceau(m);
+    }
+
+    // =========================================================
+    //  PLAYLISTS COLLABORATIVES
+    // =========================================================
+
+    /**
+     * Retourne toutes les playlists partagees avec l'abonne courant
+     * (dont il est collaborateur, mais pas proprietaire).
+     */
+    public ArrayList<Playlist> getPlaylistsPartagees() {
+        ArrayList<Playlist> result = new ArrayList<>();
+        if (!(utilisateurCourant instanceof Abonne)) return result;
+        Abonne moi = (Abonne) utilisateurCourant;
+        for (Abonne a : abonnes) {
+            for (Playlist p : a.getPlaylists()) {
+                if (p.estCollaborateur(moi)) {
+                    result.add(p);
+                }
+            }
+        }
+        return result;
+    }
+
+    /** Ajoute un collaborateur a une playlist. */
+    public void ajouterCollaborateur(Playlist p, Abonne collab, boolean peutModifier) {
+        p.ajouterCollaborateur(collab, peutModifier);
+    }
+
+    /** Retire un collaborateur d'une playlist. */
+    public void retirerCollaborateur(Playlist p, Abonne collab) {
+        p.retirerCollaborateur(collab);
+    }
+
+    /** Retourne la liste de tous les abonnes sauf l'utilisateur courant. */
+    public ArrayList<Abonne> getAutresAbonnes() {
+        ArrayList<Abonne> autres = new ArrayList<>();
+        if (!(utilisateurCourant instanceof Abonne)) return autres;
+        for (Abonne a : abonnes) {
+            if (!a.equals(utilisateurCourant)) autres.add(a);
+        }
+        return autres;
     }
 
     // =========================================================
@@ -186,7 +228,12 @@ public class GUIController {
 
     public Morceau ajouterMorceau(String titre, int duree, AuteurMusical auteur)
             throws MorceauDejaExistantException {
-        Morceau m = new Morceau(titre, duree, auteur);
+        return ajouterMorceau(titre, duree, auteur, Genre.INCONNU);
+    }
+
+    public Morceau ajouterMorceau(String titre, int duree, AuteurMusical auteur, Genre genre)
+            throws MorceauDejaExistantException {
+        Morceau m = new Morceau(titre, duree, auteur, genre);
         catalogue.ajouterMorceau(m);
         return m;
     }
