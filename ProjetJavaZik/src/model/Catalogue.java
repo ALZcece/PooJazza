@@ -121,30 +121,6 @@ public class Catalogue implements Serializable {
                 .collect(Collectors.toCollection(ArrayList::new));
     }
 
-    /**
-     * Recherche tous les morceaux d'un genre donne.
-     * @param genre le genre a filtrer
-     * @return la liste des morceaux du genre demande
-     */
-    public ArrayList<Morceau> rechercherMorceauxParGenre(Genre genre) {
-        if (genre == null) return new ArrayList<>(morceaux);
-        return morceaux.stream()
-                .filter(m -> m.getGenre() == genre)
-                .collect(Collectors.toCollection(ArrayList::new));
-    }
-
-    /**
-     * Recherche par titre ET filtre par genre.
-     * Si genre est null, on n'applique pas le filtre genre.
-     */
-    public ArrayList<Morceau> rechercherMorceaux(String query, Genre genre) {
-        String q = query == null ? "" : query.toLowerCase();
-        return morceaux.stream()
-                .filter(m -> m.getTitre().toLowerCase().contains(q))
-                .filter(m -> genre == null || m.getGenre() == genre)
-                .collect(Collectors.toCollection(ArrayList::new));
-    }
-
     public ArrayList<Album> rechercherAlbums(String query) {
         String q = query.toLowerCase();
         return albums.stream()

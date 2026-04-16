@@ -3,71 +3,67 @@
 #   ARTISTE|nom|biographie
 #   GROUPE|nom|membre1;membre2;...
 #   ALBUM|titre|annee|auteurNom
-#   MORCEAU|titre|dureeSecondes|auteurNom|albumTitre|genre
+#   MORCEAU|titre|dureeSecondes|auteurNom|albumTitre
 #
-# Genres disponibles : Rock, Pop, Jazz, Classique, Hip-Hop, Rap, Electro,
-#                      Metal, Country, Blues, Folk, Reggae, R&B, Soul, Inconnu
-# Le champ genre est optionnel (Inconnu par defaut).
-#
-# Les lignes commencant par # sont des commentaires.
+# Les lignes commençant par # sont des commentaires.
 
-# --- The Beatles ---------------------------------------
+# ─── The Beatles ─────────────────────────────────────────
 ARTISTE|John Lennon|Auteur-compositeur et leader des Beatles.
 ARTISTE|Paul McCartney|Bassiste et co-auteur principal des Beatles.
 ARTISTE|George Harrison|Guitariste des Beatles.
 ARTISTE|Ringo Starr|Batteur des Beatles.
 GROUPE|The Beatles|John Lennon;Paul McCartney;George Harrison;Ringo Starr
 ALBUM|Abbey Road|1969|The Beatles
-MORCEAU|Come Together|259|The Beatles|Abbey Road|Rock
-MORCEAU|Something|183|The Beatles|Abbey Road|Rock
-MORCEAU|Here Comes the Sun|185|The Beatles|Abbey Road|Rock
-MORCEAU|Oh! Darling|207|The Beatles|Abbey Road|Rock
-MORCEAU|Let It Be|243|The Beatles|Abbey Road|Rock
+MORCEAU|Come Together|259|The Beatles|Abbey Road
+MORCEAU|Something|183|The Beatles|Abbey Road
+MORCEAU|Here Comes the Sun|185|The Beatles|Abbey Road
+MORCEAU|Oh! Darling|207|The Beatles|Abbey Road
+MORCEAU|Let It Be|243|The Beatles|Abbey Road
 ALBUM|Let It Be|1970|The Beatles
-MORCEAU|Get Back|191|The Beatles|Let It Be|Rock
-MORCEAU|The Long and Winding Road|218|The Beatles|Let It Be|Rock
+MORCEAU|Get Back|191|The Beatles|Let It Be
+MORCEAU|The Long and Winding Road|218|The Beatles|Let It Be
 
-# --- Michael Jackson -----------------------------------
+# ─── Michael Jackson ─────────────────────────────────────
 ARTISTE|Michael Jackson|Roi de la Pop.
 ALBUM|Thriller|1982|Michael Jackson
-MORCEAU|Thriller|358|Michael Jackson|Thriller|Pop
-MORCEAU|Billie Jean|294|Michael Jackson|Thriller|Pop
-MORCEAU|Beat It|258|Michael Jackson|Thriller|Pop
-MORCEAU|Wanna Be Startin' Somethin'|363|Michael Jackson|Thriller|Pop
+MORCEAU|Thriller|358|Michael Jackson|Thriller
+MORCEAU|Billie Jean|294|Michael Jackson|Thriller
+MORCEAU|Beat It|258|Michael Jackson|Thriller
+MORCEAU|Wanna Be Startin' Somethin'|363|Michael Jackson|Thriller
 ALBUM|Bad|1987|Michael Jackson
-MORCEAU|Bad|247|Michael Jackson|Bad|Pop
-MORCEAU|The Way You Make Me Feel|300|Michael Jackson|Bad|Pop
-MORCEAU|Man in the Mirror|318|Michael Jackson|Bad|Pop
+MORCEAU|Bad|247|Michael Jackson|Bad
+MORCEAU|The Way You Make Me Feel|300|Michael Jackson|Bad
+MORCEAU|Man in the Mirror|318|Michael Jackson|Bad
 
-# --- Adele --------------------------------------------
-ARTISTE|Adele|Chanteuse britannique recompensee aux Grammy Awards.
+# ─── Adele ───────────────────────────────────────────────
+ARTISTE|Adele|Chanteuse britannique récompensée aux Grammy Awards.
 ALBUM|21|2011|Adele
-MORCEAU|Rolling in the Deep|228|Adele|21|Soul
-MORCEAU|Someone Like You|285|Adele|21|Soul
-MORCEAU|Set Fire to the Rain|242|Adele|21|Soul
+MORCEAU|Rolling in the Deep|228|Adele|21
+MORCEAU|Someone Like You|285|Adele|21
+MORCEAU|Set Fire to the Rain|242|Adele|21
 
-# --- Daft Punk ----------------------------------------
+# ─── Daft Punk ───────────────────────────────────────────
 ARTISTE|Thomas Bangalter|
 ARTISTE|Guy-Manuel de Homem-Christo|
 GROUPE|Daft Punk|Thomas Bangalter;Guy-Manuel de Homem-Christo
 ALBUM|Random Access Memories|2013|Daft Punk
-MORCEAU|Get Lucky|369|Daft Punk|Random Access Memories|Electro
-MORCEAU|Lose Yourself to Dance|353|Daft Punk|Random Access Memories|Electro
-MORCEAU|Instant Crush|338|Daft Punk|Random Access Memories|Electro
-MORCEAU|Within|228|Daft Punk|Random Access Memories|Electro
+MORCEAU|Get Lucky|369|Daft Punk|Random Access Memories
+MORCEAU|Lose Yourself to Dance|353|Daft Punk|Random Access Memories
+MORCEAU|Instant Crush|338|Daft Punk|Random Access Memories
+MORCEAU|Within|228|Daft Punk|Random Access Memories
 
-# --- Queen --------------------------------------------
-ARTISTE|Freddie Mercury|Chanteur legendaire et frontman de Queen.
+# ─── Queen ───────────────────────────────────────────────
+ARTISTE|Freddie Mercury|Chanteur légendaire et frontman de Queen.
 ARTISTE|Brian May|Guitariste de Queen.
 ARTISTE|Roger Taylor|Batteur de Queen.
 ARTISTE|John Deacon|Bassiste de Queen.
 GROUPE|Queen|Freddie Mercury;Brian May;Roger Taylor;John Deacon
 ALBUM|A Night at the Opera|1975|Queen
-MORCEAU|Bohemian Rhapsody|354|Queen|A Night at the Opera|Rock
-MORCEAU|You're My Best Friend|170|Queen|A Night at the Opera|Rock
-MORCEAU|Love of My Life|218|Queen|A Night at the Opera|Rock
+MORCEAU|Bohemian Rhapsody|354|Queen|A Night at the Opera
+MORCEAU|You're My Best Friend|170|Queen|A Night at the Opera
+MORCEAU|Love of My Life|218|Queen|A Night at the Opera
 ALBUM|Greatest Hits|1981|Queen
-MORCEAU|We Will Rock You|122|Queen|Greatest Hits|Rock
-MORCEAU|We Are the Champions|179|Queen|Greatest Hits|Rock
-MORCEAU|Don't Stop Me Now|209|Queen|Greatest Hits|Rock
-MORCEAU|Radio Ga Ga|343|Queen|Greatest Hits|Rock
+MORCEAU|We Will Rock You|122|Queen|Greatest Hits
+MORCEAU|We Are the Champions|179|Queen|Greatest Hits
+MORCEAU|Don't Stop Me Now|209|Queen|Greatest Hits
+MORCEAU|Radio Ga Ga|343|Queen|Greatest Hits

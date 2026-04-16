@@ -70,9 +70,13 @@ public class Controller {
         } else {
             vue.afficherErreur("Identifiants incorrects.");
         }
+<<<<<<< HEAD
     }// Cette fonction gère la connexion de l’administrateur 
     // il  vérifie le login 
     // il vérifie le mot de passe avant d’ouvrir le menu admin.
+=======
+    }
+>>>>>>> parent of 1fa09ea (final modifs)
 
     private void connexionAbonne() {
         System.out.println("\n  -- Connexion abonné --");

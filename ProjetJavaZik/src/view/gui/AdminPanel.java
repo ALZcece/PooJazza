@@ -105,10 +105,10 @@ public class AdminPanel extends JPanel {
         p.setBackground(WelcomePanel.BG);
         p.setBorder(new EmptyBorder(10, 10, 10, 10));
 
-        morceauxModel = new DefaultTableModel(new String[]{"Titre", "Auteur", "Genre", "Duree", "Ecoutes", "Note moy."}, 0) {
+        morceauxModel = new DefaultTableModel(new String[]{"Titre", "Auteur", "Duree", "Ecoutes", "Note moy."}, 0) {
             public boolean isCellEditable(int r, int c) { return false; }
             public Class<?> getColumnClass(int col) {
-                if (col == 4) return Integer.class;
+                if (col == 3) return Integer.class;
                 return String.class;
             }
         };
@@ -297,14 +297,11 @@ public class AdminPanel extends JPanel {
         JTextField titreField = new JTextField(20);
         JTextField dureeField = new JTextField(6);
         JComboBox<String> auteurBox = new JComboBox<>(auteurs.stream().map(AuteurMusical::getNom).toArray(String[]::new));
-        JComboBox<Genre> genreBox = new JComboBox<>(Genre.values());
-        genreBox.setSelectedItem(Genre.INCONNU);
         dureeField.setToolTipText("Duree en secondes (ex: 210)");
-        JPanel p = new JPanel(new GridLayout(4, 2, 8, 8));
+        JPanel p = new JPanel(new GridLayout(3, 2, 8, 8));
         p.add(new JLabel("Titre :")); p.add(titreField);
         p.add(new JLabel("Duree (sec) :")); p.add(dureeField);
         p.add(new JLabel("Auteur :")); p.add(auteurBox);
-        p.add(new JLabel("Genre :")); p.add(genreBox);
         int res = JOptionPane.showConfirmDialog(frame, p, "Ajouter un morceau", JOptionPane.OK_CANCEL_OPTION, JOptionPane.PLAIN_MESSAGE);
         if (res != JOptionPane.OK_OPTION) return;
         String titre = titreField.getText().trim();
@@ -312,7 +309,7 @@ public class AdminPanel extends JPanel {
         int duree;
         try { duree = Integer.parseInt(dureeField.getText().trim()); } catch (NumberFormatException e) { duree = 180; }
         try {
-            ctrl.ajouterMorceau(titre, duree, auteurs.get(auteurBox.getSelectedIndex()), (Genre) genreBox.getSelectedItem());
+            ctrl.ajouterMorceau(titre, duree, auteurs.get(auteurBox.getSelectedIndex()));
             rafraichirMorceaux();
         } catch (MorceauDejaExistantException ex) {
             JOptionPane.showMessageDialog(frame, ex.getMessage(), "Deja present", JOptionPane.WARNING_MESSAGE);
@@ -400,7 +397,6 @@ public class AdminPanel extends JPanel {
             morceauxModel.addRow(new Object[]{
                     m.getTitre(),
                     m.getAuteur() != null ? m.getAuteur().getNom() : "",
-                    m.getGenre().getLabel(),
                     m.getDureeFormatee(),
                     m.getNbEcoutes(),
                     note

@@ -93,11 +93,9 @@ public class DataLoader {
                             int duree        = Integer.parseInt(parts[2].trim());
                             String auteurNom = parts[3].trim();
                             String albumTitre = parts.length >= 5 ? parts[4].trim() : "";
-                            String genreStr   = parts.length >= 6 ? parts[5].trim() : "";
-                            Genre genre       = Genre.fromString(genreStr);
                             AuteurMusical auteur = resoudreAuteur(auteurNom, artistesMap, groupesMap);
                             if (auteur != null) {
-                                Morceau m = new Morceau(titre, duree, auteur, genre);
+                                Morceau m = new Morceau(titre, duree, auteur);
                                 try {
                                     catalogue.ajouterMorceau(m);
                                     if (!albumTitre.isEmpty()) {
@@ -209,25 +207,25 @@ public class DataLoader {
             catalogue.ajouterGroupe(beatles);
             ajouterAlbumAvecMorceaux(catalogue, "Abbey Road", 1969, beatles,
                 new String[]{"Come Together","Something","Here Comes the Sun","Oh! Darling","Let It Be"},
-                new int[]{259,183,185,207,243}, Genre.ROCK);
+                new int[]{259,183,185,207,243});
             ajouterAlbumAvecMorceaux(catalogue, "Let It Be", 1970, beatles,
                 new String[]{"Get Back","The Long and Winding Road"},
-                new int[]{191,218}, Genre.ROCK);
+                new int[]{191,218});
 
             Artiste mj = new Artiste("Michael Jackson","Roi de la Pop.");
             catalogue.ajouterArtiste(mj);
             ajouterAlbumAvecMorceaux(catalogue, "Thriller", 1982, mj,
                 new String[]{"Thriller","Billie Jean","Beat It"},
-                new int[]{358,294,258}, Genre.POP);
+                new int[]{358,294,258});
             ajouterAlbumAvecMorceaux(catalogue, "Bad", 1987, mj,
                 new String[]{"Bad","The Way You Make Me Feel","Man in the Mirror"},
-                new int[]{247,300,318}, Genre.POP);
+                new int[]{247,300,318});
 
             Artiste adele = new Artiste("Adele","Chanteuse britannique récompensée aux Grammy Awards.");
             catalogue.ajouterArtiste(adele);
             ajouterAlbumAvecMorceaux(catalogue, "21", 2011, adele,
                 new String[]{"Rolling in the Deep","Someone Like You","Set Fire to the Rain"},
-                new int[]{228,285,242}, Genre.SOUL);
+                new int[]{228,285,242});
 
             Groupe daftPunk = new Groupe("Daft Punk");
             daftPunk.ajouterMembre(new Artiste("Thomas Bangalter"));
@@ -235,7 +233,7 @@ public class DataLoader {
             catalogue.ajouterGroupe(daftPunk);
             ajouterAlbumAvecMorceaux(catalogue, "Random Access Memories", 2013, daftPunk,
                 new String[]{"Get Lucky","Lose Yourself to Dance","Instant Crush","Within"},
-                new int[]{369,353,338,228}, Genre.ELECTRO);
+                new int[]{369,353,338,228});
 
             Groupe queen = new Groupe("Queen");
             queen.ajouterMembre(new Artiste("Freddie Mercury","Chanteur légendaire et frontman de Queen."));
@@ -243,10 +241,10 @@ public class DataLoader {
             catalogue.ajouterGroupe(queen);
             ajouterAlbumAvecMorceaux(catalogue, "A Night at the Opera", 1975, queen,
                 new String[]{"Bohemian Rhapsody","You're My Best Friend","Love of My Life"},
-                new int[]{354,170,218}, Genre.ROCK);
+                new int[]{354,170,218});
             ajouterAlbumAvecMorceaux(catalogue, "Greatest Hits", 1981, queen,
                 new String[]{"We Will Rock You","We Are the Champions","Don't Stop Me Now"},
-                new int[]{122,179,209}, Genre.ROCK);
+                new int[]{122,179,209});
 
         } catch (Exception e) {
             System.err.println("Erreur initialisation démo : " + e.getMessage());
@@ -275,12 +273,12 @@ public class DataLoader {
     et les premières exécutions du programme.*/
 
     private static void ajouterAlbumAvecMorceaux(Catalogue catalogue, String titre, int annee,
-                                                  AuteurMusical auteur, String[] titres, int[] durees, Genre genre) {
+                                                  AuteurMusical auteur, String[] titres, int[] durees) {
         Album album = new Album(titre, annee, auteur);
         catalogue.ajouterAlbum(album);
         for (int i = 0; i < titres.length; i++) {
             try {
-                Morceau m = new Morceau(titres[i], durees[i], auteur, genre);
+                Morceau m = new Morceau(titres[i], durees[i], auteur);
                 catalogue.ajouterMorceau(m);
                 album.ajouterMorceau(m);
             } catch (model.exceptions.MorceauDejaExistantException ignored) {}

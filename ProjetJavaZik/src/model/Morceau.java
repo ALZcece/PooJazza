@@ -18,26 +18,13 @@ public class Morceau implements Serializable {
     private ArrayList<Album> albums;
     private int nbEcoutes;
     private ArrayList<Avis> avis;
-    private Genre genre;
 
     /**
-     * Constructeur sans genre — le genre est defini a INCONNU.
      * @param titre  titre du morceau
      * @param duree  durée en secondes
      * @param auteur artiste ou groupe auteur du morceau
      */
     public Morceau(String titre, int duree, AuteurMusical auteur) {
-        this(titre, duree, auteur, Genre.INCONNU);
-    }
-
-    /**
-     * Constructeur avec genre.
-     * @param titre  titre du morceau
-     * @param duree  durée en secondes
-     * @param auteur artiste ou groupe auteur du morceau
-     * @param genre  genre musical du morceau
-     */
-    public Morceau(String titre, int duree, AuteurMusical auteur, Genre genre) {
         this.id = UUID.randomUUID().toString();
         this.titre = titre;
         this.duree = duree;
@@ -45,7 +32,6 @@ public class Morceau implements Serializable {
         this.albums = new ArrayList<>();
         this.nbEcoutes = 0;
         this.avis = new ArrayList<>();
-        this.genre = genre != null ? genre : Genre.INCONNU;
         if (auteur != null) auteur.ajouterMorceau(this);
     }
 
@@ -57,10 +43,6 @@ public class Morceau implements Serializable {
     public ArrayList<Album> getAlbums() { return albums; }
     public int getNbEcoutes() { return nbEcoutes; }
     public ArrayList<Avis> getAvis() { return avis; }
-
-    /** @return le genre du morceau (INCONNU pour les anciennes donnees deserialisees) */
-    public Genre getGenre() { return genre != null ? genre : Genre.INCONNU; }
-    public void setGenre(Genre genre) { this.genre = genre != null ? genre : Genre.INCONNU; }
 
     public void incrementerEcoutes() { nbEcoutes++; }
 
