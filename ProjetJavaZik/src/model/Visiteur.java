@@ -8,7 +8,6 @@ import model.exceptions.LimiteEcoutesAtteinte;
  */
 public class Visiteur extends Utilisateur {
     private static final long serialVersionUID = 1L;
-
     /** Nombre maximum d'écoutes autorisées par session pour un visiteur. */
     public static final int MAX_ECOUTES_SESSION = 5;
 
@@ -18,14 +17,12 @@ public class Visiteur extends Utilisateur {
         super("Visiteur", "");
         this.nbEcoutesSession = 0;
     }
-
     public int getNbEcoutesSession() { return nbEcoutesSession; }
 
     /** @return true si le visiteur peut encore écouter un morceau */
     public boolean peutEcouter() {
         return nbEcoutesSession < MAX_ECOUTES_SESSION;
     }
-
     /**
      * Incrémente le compteur d'écoutes de la session.
      * @throws LimiteEcoutesAtteinte si la limite de session est dépassée
@@ -38,7 +35,6 @@ public class Visiteur extends Utilisateur {
         }
         nbEcoutesSession++;
     }
-
     /** Réinitialise le compteur d'écoutes (nouveau démarrage de session). */
     public void reinitialiserSession() { nbEcoutesSession = 0; }
 }

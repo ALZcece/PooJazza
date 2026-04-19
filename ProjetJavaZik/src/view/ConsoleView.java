@@ -458,7 +458,11 @@ public class ConsoleView {
         System.out.print("  [");
         for (int i = 0; i < 30; i++) {
             System.out.print("█");
-            try { Thread.sleep(60); } catch (InterruptedException ignored) {}
+            try {
+                Thread.sleep(60);
+            } catch (InterruptedException ignored) {
+                // Interruption pendant la simulation : on laisse la barre se terminer.
+            }
         }
         System.out.println("]  ✓");
     }
