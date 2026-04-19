@@ -104,7 +104,9 @@ public class DataLoader {
                                         Album album = albumsMap.get(albumTitre.toLowerCase());
                                         if (album != null) album.ajouterMorceau(m);
                                     }
-                                } catch (MorceauDejaExistantException ignored) {}
+                                } catch (MorceauDejaExistantException ignored) {
+                                    // Doublon dans le fichier source : on garde la première occurrence.
+                                }
                             }
                         }
                         break;
@@ -283,7 +285,9 @@ public class DataLoader {
                 Morceau m = new Morceau(titres[i], durees[i], auteur, genre);
                 catalogue.ajouterMorceau(m);
                 album.ajouterMorceau(m);
-            } catch (model.exceptions.MorceauDejaExistantException ignored) {}
+            } catch (model.exceptions.MorceauDejaExistantException ignored) {
+                // Morceau déjà présent dans le catalogue démo : on passe.
+            }
         }
     }
     /* Cette fonction ajouterAlbumAvecMorceaux est une méthode utilitaire

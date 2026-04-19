@@ -45,7 +45,7 @@ public class Catalogue implements Serializable {
     public void ajouterMorceau(Morceau m) throws MorceauDejaExistantException {
         for (Morceau existing : morceaux) {
             if (existing.getTitre().equalsIgnoreCase(m.getTitre())
-                    && existing.getAuteur() == m.getAuteur()) {
+                    && existing.getAuteur().equals(m.getAuteur())) {
                 throw new MorceauDejaExistantException(
                         "Le morceau '" + m.getTitre() + "' de cet auteur existe déjà dans le catalogue.");
             }
@@ -97,8 +97,8 @@ public class Catalogue implements Serializable {
     public void supprimerArtiste(Artiste a) throws ElementIntrouvableException {
         if (!artistes.remove(a))
             throw new ElementIntrouvableException("Artiste introuvable dans le catalogue.");
-        morceaux.removeIf(m -> m.getAuteur() == a);
-        albums.removeIf(alb -> alb.getAuteur() == a);
+        morceaux.removeIf(m -> a.equals(m.getAuteur()));
+        albums.removeIf(alb -> a.equals(alb.getAuteur()));
     }
 
     /**
@@ -108,8 +108,8 @@ public class Catalogue implements Serializable {
     public void supprimerGroupe(Groupe g) throws ElementIntrouvableException {
         if (!groupes.remove(g))
             throw new ElementIntrouvableException("Groupe introuvable dans le catalogue.");
-        morceaux.removeIf(m -> m.getAuteur() == g);
-        albums.removeIf(alb -> alb.getAuteur() == g);
+        morceaux.removeIf(m -> g.equals(m.getAuteur()));
+        albums.removeIf(alb -> g.equals(alb.getAuteur()));
     }
 
     // --- Recherche ---
@@ -122,9 +122,9 @@ public class Catalogue implements Serializable {
     }
 
     /**
-     * Recherche tous les morceaux d'un genre donne.
-     * @param genre le genre a filtrer
-     * @return la liste des morceaux du genre demande
+     * Recherche tous les morceaux d'un genre donné.
+     * @param genre le genre à filtrer
+     * @return la liste des morceaux du genre demandé
      */
     public ArrayList<Morceau> rechercherMorceauxParGenre(Genre genre) {
         if (genre == null) return new ArrayList<>(morceaux);

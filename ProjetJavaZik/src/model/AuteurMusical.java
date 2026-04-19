@@ -2,6 +2,7 @@ package model;
 
 import java.io.Serializable;
 import java.util.ArrayList;
+import java.util.Objects;
 
 /**
  * Classe abstraite représentant un auteur musical (artiste solo ou groupe).
@@ -41,4 +42,16 @@ public abstract class AuteurMusical implements Serializable {
 
     @Override
     public String toString() { return nom; }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (!(o instanceof AuteurMusical)) return false;
+        return Objects.equals(id, ((AuteurMusical) o).id);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(id);
+    }
 }

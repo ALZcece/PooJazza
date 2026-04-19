@@ -2,7 +2,7 @@ package model;
 
 /**
  * Genres musicaux disponibles dans le catalogue.
- * Utilises pour categoriser les morceaux et permettre la recherche par genre.
+ * Utilisés pour catégoriser les morceaux et permettre la recherche par genre.
  */
 public enum Genre {
     ROCK("Rock"),
@@ -37,8 +37,8 @@ public enum Genre {
     }
 
     /**
-     * Convertit une chaine de caracteres en Genre, insensible a la casse.
-     * @param s chaine a convertir (ex: "rock", "Pop", "HIP_HOP")
+     * Convertit une chaîne de caractères en Genre, insensible à la casse.
+     * @param s chaîne à convertir (ex: "rock", "Pop", "HIP_HOP")
      * @return le Genre correspondant, ou INCONNU si non reconnu
      */
     public static Genre fromString(String s) {
