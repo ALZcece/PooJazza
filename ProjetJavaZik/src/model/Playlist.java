@@ -9,9 +9,9 @@ import java.util.HashMap;
 import java.util.UUID;
 
 /**
- * Represente une playlist appartenant a un {@link Abonne}.
- * Supporte la collaboration : le proprietaire peut partager la playlist
- * avec d'autres abonnes en leur attribuant des droits de lecture seule
+ * Représente une playlist appartenant à un {@link Abonne}.
+ * Supporte la collaboration : le propriétaire peut partager la playlist
+ * avec d'autres abonnés en leur attribuant des droits de lecture seule
  * ou de modification (ajout/suppression de morceaux).
  */
 public class Playlist implements Serializable {
@@ -22,7 +22,7 @@ public class Playlist implements Serializable {
     private Abonne proprietaire;
     private ArrayList<Morceau> morceaux;
 
-    /** Collaborateurs : cle = abonne, valeur = true si peut modifier, false si lecture seule. */
+    /** Collaborateurs : clé = abonné, valeur = true si peut modifier, false si lecture seule. */
     private HashMap<Abonne, Boolean> collaborateurs;
 
     /**

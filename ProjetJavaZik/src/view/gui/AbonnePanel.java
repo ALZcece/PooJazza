@@ -280,11 +280,15 @@ public class AbonnePanel extends JPanel {
                         Morceau m = (Morceau) o[2];
                         String auteur = m.getAuteur() != null ? m.getAuteur().getNom() : "?";
 
-                        // Enregistrer l'ecoute → met a jour le compteur ET ajoute dans l'historique
-                        try { ctrl.ecouter(m); } catch (Exception ignored) {}
+                        // Enregistrer l'écoute → met à jour le compteur ET ajoute dans l'historique
+                        try {
+                            ctrl.ecouter(m);
+                        } catch (Exception ignored) {
+                            // Limite d'écoutes ou compte inactif : on continue la lecture sans compter.
+                        }
 
-                        // Rafraichir l'historique IMMEDIATEMENT pour qu'il soit a jour
-                        // meme si l'utilisateur consulte l'onglet pendant la lecture
+                        // Rafraîchir l'historique immédiatement pour qu'il soit à jour
+                        // même si l'utilisateur consulte l'onglet pendant la lecture.
                         rafraichirHistorique();
 
                         playlistNowPlayingLabel.setText(String.format(

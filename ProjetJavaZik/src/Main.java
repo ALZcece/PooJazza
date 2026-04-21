@@ -23,7 +23,9 @@ public class Main {
             SwingUtilities.invokeLater(() -> {
                 try {
                     UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
-                } catch (Exception ignored) {}
+                } catch (Exception ignored) {
+                    // Look & feel système indisponible : on garde celui par défaut.
+                }
                 GUIController ctrl = new GUIController();
                 MainFrame frame = new MainFrame(ctrl);
                 frame.setVisible(true);

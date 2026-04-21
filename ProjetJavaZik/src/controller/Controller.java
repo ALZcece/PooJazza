@@ -6,6 +6,7 @@ import view.ConsoleView;
 
 import java.io.*;
 import java.util.ArrayList;
+import java.util.Map;
 
 /**
  * Contrôleur principal de l'application JavaZic.
@@ -436,7 +437,7 @@ public class Controller {
             if (p.getCollaborateurs().isEmpty()) {
                 System.out.println("    (aucun)");
             } else {
-                for (java.util.Map.Entry<Abonne, Boolean> entry : p.getCollaborateurs().entrySet()) {
+                for (Map.Entry<Abonne, Boolean> entry : p.getCollaborateurs().entrySet()) {
                     String droits = entry.getValue() ? "Lecture + Édition" : "Lecture seule";
                     System.out.println("    - " + entry.getKey().getLogin() + " [" + droits + "]");
                 }

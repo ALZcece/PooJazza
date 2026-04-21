@@ -21,7 +21,7 @@ public class Morceau implements Serializable {
     private Genre genre;
 
     /**
-     * Constructeur sans genre — le genre est defini a INCONNU.
+     * Constructeur sans genre — le genre est défini à INCONNU.
      * @param titre  titre du morceau
      * @param duree  durée en secondes
      * @param auteur artiste ou groupe auteur du morceau
@@ -58,7 +58,7 @@ public class Morceau implements Serializable {
     public int getNbEcoutes() { return nbEcoutes; }
     public ArrayList<Avis> getAvis() { return avis; }
 
-    /** @return le genre du morceau (INCONNU pour les anciennes donnees deserialisees) */
+    /** @return le genre du morceau (INCONNU pour les anciennes données désérialisées) */
     public Genre getGenre() { return genre != null ? genre : Genre.INCONNU; }
     public void setGenre(Genre genre) { this.genre = genre != null ? genre : Genre.INCONNU; }
 

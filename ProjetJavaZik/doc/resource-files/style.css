@@ -1,0 +1,190 @@
+/* ============================================================
+   ProjetJavaZik — custom Javadoc stylesheet
+   Palette reprise de view.gui.WelcomePanel (thème vert Spotify)
+   ============================================================ */
+
+:root {
+    --bg:          #f5f5f5;   /* WelcomePanel.BG          */
+    --card-bg:     #ffffff;   /* WelcomePanel.CARD_BG     */
+    --fg:          #191414;   /* WelcomePanel.FG          */
+    --fg-dim:      #737373;   /* WelcomePanel.FG_DIM      */
+    --accent:      #1DB954;   /* WelcomePanel.ACCENT      */
+    --accent-hov:  #19A048;   /* WelcomePanel.ACCENT_HOVER*/
+    --accent2:     #1ED760;   /* WelcomePanel.ACCENT2     */
+    --border:      #dedede;   /* WelcomePanel.BORDER      */
+    --selection:   #c8f0d7;   /* WelcomePanel.SELECTION   */
+    --table-grid:  #f0f0f0;   /* WelcomePanel.TABLE_GRID  */
+    --shadow:      0 2px 8px rgba(0, 0, 0, 0.06);
+}
+
+/* ---------- Base ---------- */
+body {
+    background-color: var(--bg) !important;
+    color: var(--fg) !important;
+    font-family: "Segoe UI", "Helvetica Neue", Arial, sans-serif !important;
+}
+
+/* ---------- Titres ---------- */
+h1, h2, h3, h4, h5, h6,
+.title, .header .title {
+    color: var(--fg) !important;
+    font-weight: 600 !important;
+}
+.title {
+    border-bottom: 3px solid var(--accent) !important;
+    padding-bottom: 0.4em !important;
+}
+
+/* ---------- Liens ---------- */
+a:link, a:visited {
+    color: var(--accent-hov) !important;
+    text-decoration: none !important;
+}
+a:hover, a:active, a:focus {
+    color: var(--accent2) !important;
+    text-decoration: underline !important;
+}
+
+/* ---------- Barres de navigation ---------- */
+.top-nav, .bottom-nav {
+    background-color: var(--card-bg) !important;
+    background-image: none !important;
+    color: var(--fg) !important;
+    border-bottom: 1px solid var(--border) !important;
+    box-shadow: var(--shadow);
+}
+.sub-nav {
+    background-color: var(--bg) !important;
+    border-bottom: 1px solid var(--border) !important;
+}
+.top-nav a:link, .top-nav a:visited,
+.bottom-nav a:link, .bottom-nav a:visited {
+    color: var(--fg) !important;
+}
+.nav-bar-cell1-rev {
+    background-color: var(--accent) !important;
+    color: #ffffff !important;
+    border-radius: 4px;
+}
+.skip-nav {
+    color: var(--accent-hov) !important;
+}
+
+/* ---------- Cartes / blocs ---------- */
+.header, .class-description,
+.description, .details, .summary,
+section.description, section.details, section.summary {
+    background-color: var(--card-bg) !important;
+    border: 1px solid var(--border) !important;
+    border-radius: 8px !important;
+    padding: 16px !important;
+    margin: 12px 0 !important;
+    box-shadow: var(--shadow);
+}
+
+/* ---------- Tableaux ---------- */
+.summary-table, .details-table {
+    border: 1px solid var(--border) !important;
+    border-radius: 8px !important;
+    overflow: hidden;
+    background-color: var(--card-bg) !important;
+}
+.summary-table > .table-header,
+.details-table > .table-header {
+    background-color: var(--accent) !important;
+    color: #ffffff !important;
+    font-weight: 600;
+}
+.summary-table .even-row-color,
+.details-table .even-row-color {
+    background-color: var(--card-bg) !important;
+}
+.summary-table .odd-row-color,
+.details-table .odd-row-color {
+    background-color: var(--table-grid) !important;
+}
+.summary-table .col-first,
+.summary-table .col-second,
+.summary-table .col-last,
+.details-table .col-first,
+.details-table .col-second,
+.details-table .col-last {
+    border-bottom: 1px solid var(--border) !important;
+}
+
+/* ---------- Onglets des tableaux ---------- */
+.table-tabs {
+    background-color: transparent !important;
+}
+.table-tabs > button {
+    background-color: var(--card-bg) !important;
+    color: var(--fg) !important;
+    border: 1px solid var(--border) !important;
+    border-radius: 999px !important;
+    padding: 4px 14px !important;
+    margin-right: 6px !important;
+    cursor: pointer;
+}
+.table-tabs > .active-table-tab {
+    background-color: var(--accent) !important;
+    color: #ffffff !important;
+    border-color: var(--accent-hov) !important;
+}
+
+/* ---------- Code ---------- */
+pre, code, tt,
+.member-signature, .type-signature {
+    font-family: "Cascadia Code", Consolas, "Courier New", monospace !important;
+    background-color: var(--table-grid) !important;
+    color: var(--fg) !important;
+    border-radius: 4px;
+    padding: 1px 4px;
+}
+pre {
+    padding: 10px 14px !important;
+    border-left: 3px solid var(--accent) !important;
+}
+
+/* ---------- Encadrés notes / deprecated ---------- */
+.notes, .block-list > li > .notes {
+    background-color: var(--selection) !important;
+    border-left: 4px solid var(--accent-hov) !important;
+    padding: 8px 12px;
+    border-radius: 4px;
+}
+.deprecated-block, .deprecation-block {
+    background-color: #fff5f5 !important;
+    border-left: 4px solid #eb4646 !important;
+}
+
+/* ---------- Cadre latéral (index, recherche) ---------- */
+.index-nav, .packages-frame, .all-classes-frame {
+    background-color: var(--card-bg) !important;
+    border-right: 1px solid var(--border) !important;
+}
+input, select, textarea {
+    background-color: var(--card-bg) !important;
+    color: var(--fg) !important;
+    border: 1px solid var(--border) !important;
+    border-radius: 4px !important;
+    padding: 4px 8px !important;
+}
+input:focus {
+    outline: 2px solid var(--accent) !important;
+    outline-offset: 1px;
+}
+
+/* ---------- Sélection texte ---------- */
+::selection {
+    background-color: var(--selection);
+    color: var(--fg);
+}
+
+/* ---------- Petits détails ---------- */
+hr {
+    border: none;
+    border-top: 1px solid var(--border);
+}
+.inherits-list, .use-summary {
+    color: var(--fg-dim) !important;
+}

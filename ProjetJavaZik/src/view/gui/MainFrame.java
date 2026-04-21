@@ -45,7 +45,7 @@ public class MainFrame extends JFrame {
         // Fond global
         contentPane.setBackground(WelcomePanel.BG);
 
-        // Sauvegarde automatique a la fermeture
+        // Sauvegarde automatique à la fermeture
         addWindowListener(new WindowAdapter() {
             @Override
             public void windowClosing(WindowEvent e) {
@@ -55,7 +55,7 @@ public class MainFrame extends JFrame {
             }
         });
 
-        // Creation des panels
+        // Création des panels
         welcomePanel   = new WelcomePanel(ctrl, this);
         cataloguePanel = new CataloguePanel(ctrl, this, false);
         abonnePanel    = new AbonnePanel(ctrl, this);
@@ -71,7 +71,7 @@ public class MainFrame extends JFrame {
     }
 
     /**
-     * Navigue vers l'ecran indique et rafraichit son contenu.
+     * Navigue vers l'écran indiqué et rafraîchit son contenu.
      */
     public void showCard(String name) {
         cardLayout.show(contentPane, name);
@@ -82,7 +82,7 @@ public class MainFrame extends JFrame {
         }
     }
 
-    /** Recree le panel abonne (apres login) et l'affiche. */
+    /** Recrée le panel abonné (après login) et l'affiche. */
     public void ouvrirEspaceAbonne() {
         contentPane.remove(abonnePanel);
         abonnePanel = new AbonnePanel(ctrl, this);
